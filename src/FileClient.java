@@ -1,5 +1,3 @@
-package nl.frobsie.dh14.networking.les3.fileserver;
-
 import java.io.*;
 import java.net.*;
 

@@ -1,5 +1,3 @@
-package nl.frobsie.dh14.networking.les3.fileserver;
-
 import java.io.File;
 
 public class FileResource extends File {

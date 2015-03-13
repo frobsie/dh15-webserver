@@ -1,5 +1,4 @@
-package nl.frobsie.dh14.networking.les3.fileserver;
-
+import sun.security.krb5.Config;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -11,14 +10,14 @@ public class FileServer {
 	public static String SERVER_CLIENT_ACCEPTED = "Accepted connection : ";
 	public static String SERVER_CLIENT_DISCONNECTED = "Client disconnected : ";
 	public static String SERVER_ERROR_COULDNOTSTART = "Could not start server.";
-	
-	public static int PORT = 2000;
+	public static String SERVER_ERROR_COULDNOTREADCONFIG = "Could not read config.";
+    public static String SERVER_ERROR_EXCEPTION = "EXCEPTION THROWN IN THREAD";
 	
 	/** ServerSocket */
 	private ServerSocket serverSocket;
 	
 	/** Is the server running? */
-	private boolean isRunning = true;
+	public boolean isRunning = true;
 	
 	/**
 	 * Starts the fileserver
@@ -27,21 +26,36 @@ public class FileServer {
 	 */
 	public void startServer() throws IOException
 	{
-		// setup serversocket with port
-		serverSocket = new ServerSocket(PORT);
-		
-		while(isRunning) {
-			// accept connections
-			Socket clientSocket = serverSocket.accept();
-		
-			// start new thread for incoming connection
-			Thread t = new Thread(new ClientThread(clientSocket));
-            t.start();
-		}
-		
-		serverSocket.close();
+        // Loop to restart server after exception
+		while(true) {
+            // setup serversocket with port
+            try {
+                int port = new Integer(ConfigPropertyValues.get("port"));
+                System.out.println(SERVER_STARTED + port);
+
+                serverSocket = new ServerSocket(port);
+                while (isRunning) {
+                    // accept connections
+                    Socket clientSocket = serverSocket.accept();
+
+                    // start new thread for incoming connection
+                    Thread t = new Thread(new ClientThread(clientSocket, this));
+                    t.start();
+                }
+                this.closeServer();
+            } catch (Exception e) {
+                // restart server
+            }
+        }
 	}
-	
+
+    public void closeServer() {
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 	/**
 	 * Main
 	 * 
@@ -49,6 +63,13 @@ public class FileServer {
 	 */
 	public static void main(String[] args)
 	{
+        // init config
+        try {
+            ConfigPropertyValues.load();
+        } catch (IOException e) {
+            System.out.println(SERVER_ERROR_COULDNOTREADCONFIG);
+            System.exit(0);
+        }
 		// init file server
 		FileServer fileServer = new FileServer();
 		
@@ -56,6 +77,7 @@ public class FileServer {
 			// start file server
 			fileServer.startServer();
 		} catch (Exception e) {
+            e.printStackTrace();
 			System.out.println(SERVER_ERROR_COULDNOTSTART);
 			System.exit(0);
 		}

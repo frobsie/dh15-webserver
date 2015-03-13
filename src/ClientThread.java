@@ -1,5 +1,3 @@
-package nl.frobsie.dh14.networking.les3.fileserver;
-
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -41,13 +39,17 @@ public class ClientThread implements Runnable {
 	/** Writer for sending text to the client */
 	private PrintWriter printWriter;
 
+    public FileServer fileServer;
+
 	/**
 	 * Setup worker thread with given socket.
 	 * 
 	 * @param socket
+	 * @param fileServer
 	 */
-	public ClientThread(Socket socket) {
+	public ClientThread(Socket socket, FileServer fileServer) {
 		this.socket = socket;
+        this.fileServer = fileServer;
 	}
 
 	/**
@@ -55,6 +57,8 @@ public class ClientThread implements Runnable {
 	 */
 	@Override
 	public void run() {
+
+        /*
 		try {
 			printLine(SERVER_OPENEDSOCKET + getSocketInfo(), 0);
 
@@ -84,12 +88,13 @@ public class ClientThread implements Runnable {
 			// TODO
 			e.printStackTrace();
 		}
+		*/
 	}
 
 	/**
 	 * Temporary GET handler
 	 * 
-	 * @param input
+	 * @param filePath
 	 * @throws IOException
 	 */
 	private void handleGet(String filePath) throws IOException {
@@ -127,7 +132,7 @@ public class ClientThread implements Runnable {
 	/**
 	 * Handles user input
 	 * 
-	 * @param input
+	 * @param line
 	 * @throws IOException
 	 */
 	protected void processInput(String line) throws IOException, Exception {
@@ -147,6 +152,7 @@ public class ClientThread implements Runnable {
 
 		printLine(line, 2);
 
+        /**
 		switch (command) {
 		case "GET":
 			handleGet(parameter);
@@ -160,6 +166,7 @@ public class ClientThread implements Runnable {
 			// nutteloos
 			break;
 		}
+         */
 	}
 
 	protected void sendLine(String message) throws IOException {
@@ -276,4 +283,15 @@ public class ClientThread implements Runnable {
 	protected void listFolderContent() {
 		// TODO
 	}
+
+    protected void resetPort() {
+        ConfigPropertyValues.set("port", "8012");
+        System.out.println("CONNNECT");
+        try {
+            socket.close();
+            fileServer.closeServer();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
