@@ -154,15 +154,13 @@ public class ClientThread implements Runnable {
 	 */
 	private void handleGet(String uri, String protocol) throws IOException {		
         // if ask for root get default page (TODO accept multiple defaults)
-        if(uri == "/" && !directoryBrowsingAllowed) {
-            uri = ConfigPropertyValues.get("defaultpage");
+        if(uri.equals("/") && !directoryBrowsingAllowed) {
+            uri = getDefaultpageUri();
         }
 
         String fullPath = ConfigPropertyValues.get("docroot") + uri;
 
         //TODO if fullPath is not permitted return 403
-        //TODO implement content-type
-
         printLine(fullPath, 0);
 		File file = new File(fullPath);
 		
@@ -213,6 +211,18 @@ public class ClientThread implements Runnable {
 		sendResponseHeader(404, 0);
         printLine(ERROR_CLIENT_FILENOTEXISTS, 3);
 	}
+
+    protected String getDefaultpageUri() {
+        String[] lineSplit = ConfigPropertyValues.get("defaultpage").split(";");
+        for(int i = 0; i < lineSplit.length; i++) {
+            System.out.println(lineSplit[i]);
+            File file = new File(ConfigPropertyValues.get("docroot") + "/" + lineSplit[i]);
+            if(file.exists()) {
+                return "/" + lineSplit[i];
+            }
+        }
+        return "/" + lineSplit[0];
+    }
 	
 	protected void plot404() throws IOException {
 		String errorPage = ConfigPropertyValues.get("errorpage");
@@ -258,11 +268,9 @@ public class ClientThread implements Runnable {
                 ConfigPropertyValues.set("defaultpage", post.get("defaultpage"));
             }
             if(post.containsKey("directorybrowsing")) {
-                if(post.get("directorybrowsing").equals("on")) {
-                    ConfigPropertyValues.set("directorybrowsing", "true");
-                } else {
-                    ConfigPropertyValues.set("directorybrowsing", "false");
-                }
+                ConfigPropertyValues.set("directorybrowsing", "true");
+            } else {
+                ConfigPropertyValues.set("directorybrowsing", "false");
             }
             ConfigPropertyValues.write();
             sendResponseHeader(203, 0);
