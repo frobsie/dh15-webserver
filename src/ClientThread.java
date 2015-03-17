@@ -12,6 +12,8 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URLConnection;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -159,9 +161,7 @@ public class ClientThread implements Runnable {
         String fullPath = ConfigPropertyValues.get("docroot") + uri;
 
         //TODO if fullPath is not permitted return 403
-        //TODO implement content-length
         //TODO implement content-type
-        //TODO implement http status code
 
         printLine(fullPath, 0);
 		File file = new File(fullPath);
@@ -181,12 +181,12 @@ public class ClientThread implements Runnable {
         	return;
         }
 
-        // 
+        // als het een file is
 		if (fileExists(file)) {	        
             // Print Headers
             // TODO find better solution
             FileResource fr = new FileResource(fullPath);
-            sendResponseHeader(200, fr.getByteSize());
+            sendResponseHeader(200, fr.getByteSize(), getContentType(fr));
 
 			sendFile(fr);
             return;
@@ -219,7 +219,7 @@ public class ClientThread implements Runnable {
 		String errorPageFullPath = ConfigPropertyValues.get("docroot") + "/" + errorPage;
 
         FileResource errorFile = new FileResource(errorPageFullPath);
-        sendResponseHeader(200, errorFile.getByteSize());
+        sendResponseHeader(200, errorFile.getByteSize(), getContentType(errorFile));
 
         sendLine("");
         sendLine("");
@@ -259,9 +259,9 @@ public class ClientThread implements Runnable {
             }
             if(post.containsKey("directorybrowsing")) {
                 if(post.get("directorybrowsing").equals("on")) {
-                    ConfigPropertyValues.set("directorybrowsing", "1");
+                    ConfigPropertyValues.set("directorybrowsing", "true");
                 } else {
-                    ConfigPropertyValues.set("directorybrowsing", "0");
+                    ConfigPropertyValues.set("directorybrowsing", "false");
                 }
             }
             ConfigPropertyValues.write();
@@ -291,8 +291,11 @@ public class ClientThread implements Runnable {
         return lines;
     }
 
+    private void sendResponseHeader(int statusCode, int contentLength){
+        sendResponseHeader(statusCode, contentLength, "text/html");
+    }
 
-    private void sendResponseHeader(int statusCode, int contentLength) {
+    private void sendResponseHeader(int statusCode, int contentLength, String contentType) {
         String status = null;
         // TODO
         // Deze als static constant definen ergens
@@ -312,9 +315,7 @@ public class ClientThread implements Runnable {
         }
         try {
             sendLine("HTTP/1.1 "+status);
-            // TODO
-            // dit gaat fout bij andere content dan html
-            sendLine("Content-Type: text/html");
+            sendLine("Content-Type: "+contentType);
             sendLine("Content-Length: "+contentLength);
         } catch (IOException e) {
             e.printStackTrace();
@@ -359,8 +360,7 @@ public class ClientThread implements Runnable {
 	 * @throws IOException
 	 */
 	protected void sendFile(FileResource fr) throws IOException {
-        //Print double linebreak to tell browser content is starting
-        sendLine("");
+        //Print single linebreak to tell browser content is starting
         sendLine("");
 
 		// setup
@@ -463,7 +463,7 @@ public class ClientThread implements Runnable {
                 ""+ ConfigPropertyValues.get("defaultpage")+"" +
                 "\" type=\"text\"></td></tr>\n" +
                 "    <tr><td>Directory browsing</td><td><input name=\"directorybrowsing\" type=\"checkbox\"";
-                if(ConfigPropertyValues.get("directorybrowsing").equals("1")) {
+                if(ConfigPropertyValues.get("directorybrowsing").equals("true")) {
                     admin += " checked=\"checked\"";
                 }
 
@@ -475,5 +475,9 @@ public class ClientThread implements Runnable {
                 "</table>\n" +
                 "</form>";
         return admin;
+    }
+
+    private String getContentType(FileResource file) {
+        return URLConnection.guessContentTypeFromName(file.getName());
     }
 }
