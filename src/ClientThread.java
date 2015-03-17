@@ -1,5 +1,6 @@
 import sun.security.krb5.Config;
 
+import javax.net.ssl.SSLException;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -73,6 +74,7 @@ public class ClientThread implements Runnable {
 
 
             ArrayList<String> lines = readTillEmptyLine();
+
             // only process when there are lines
             if(lines.size() > 0) {
 
@@ -80,7 +82,7 @@ public class ClientThread implements Runnable {
                 readRequestMethod(lines);
             }
 
-			//printLine(SERVER_CLOSINGSOCKET + getSocketInfo(), 0);
+            printLine(SERVER_CLOSINGSOCKET + getSocketInfo(), 0);
 
             // close when there is no more input
 			inputStreamReader.close();
@@ -89,7 +91,16 @@ public class ClientThread implements Runnable {
 
 		} catch (SocketException e) {
 			printLine(ERROR_CLIENT_CLOSED_CONNECTION, 3);
-		} catch (Exception e) {
+		} catch(SSLException e) {
+            //TODO fix isn't working at all
+            sendResponseHeader(301, 0);
+            try {
+                sendLine("Location: https://127.0.0.1:8021");
+            } catch(IOException ex) {
+                ex.printStackTrace();
+            }
+            return;
+        } catch(Exception e) {
 			// TODO
 			e.printStackTrace();
 		}
@@ -257,6 +268,9 @@ public class ClientThread implements Runnable {
                 break;
             case 203:
                 status = "203 NO CONTENT";
+                break;
+            case 301:
+                status = "301 Moved Permanently";
                 break;
             case 404:
                 status = "404 NO FOUND";
