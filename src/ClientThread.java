@@ -161,23 +161,19 @@ public class ClientThread implements Runnable {
         //TODO implement http status code
 
         printLine(fullPath, 0);
+        printLine(uri, 1);
 		File file = new File(fullPath);
 
 		if (fileExists(file)) {
             // Print Headers
-            //TODO find better solution
             FileResource fr = new FileResource(fullPath);
             sendResponseHeader(200, fr.getByteSize());
 
-            //Print double linebreak to tell browser content is starting
-            sendLine("");
-            sendLine("");
-			sendFile(fullPath);
+            sendFile(fr);
             return;
 		}
 
-        printLine(uri, 1);
-
+        // check if uri equals the admin url
         if(uri.equals(ADMIN_URI)) {
             String form = getManageForm();
             sendResponseHeader(200, form.length());
@@ -304,7 +300,6 @@ public class ClientThread implements Runnable {
 	protected void sendLine(String message, boolean toOut) throws IOException {
 		printWriter.println(message);
 
-        // BUG in old codebase, toOut suggests that it will be outputted but if toOut is true it doesn't output anything
 		if (toOut) {
 			printLine(message, 1);
 		}
@@ -313,14 +308,13 @@ public class ClientThread implements Runnable {
 	/**
 	 * Sends a file to client using DataOutputStreams
 	 * 
-	 * @param filePath
+	 * @param fr
 	 * @throws IOException
 	 */
-	protected void sendFile(String filePath) throws IOException,
-			FileNotFoundException, SocketException {
-
-		// load file
-		FileResource fr = new FileResource(filePath);
+	protected void sendFile(FileResource fr) throws IOException {
+        //Print double linebreak to tell browser content is starting
+        sendLine("");
+        sendLine("");
 
 		// setup
 		FileInputStream fis = new FileInputStream(fr);
@@ -328,9 +322,6 @@ public class ClientThread implements Runnable {
 		DataInputStream dis = new DataInputStream(bis);
 		OutputStream os = socket.getOutputStream();
 		DataOutputStream dos = new DataOutputStream(os);
-
-		// send filesize to client
-		printLine(filePath, 1);
 
 		// tries to read the complete file into the inputstream
 		dis.readFully(fr.getBytes(), 0, fr.getByteSize());
@@ -343,37 +334,6 @@ public class ClientThread implements Runnable {
 
 		// close the datainputstream
 		dis.close();
-	}
-	
-//	protected void receiveFile(int totalSize, String fileName) throws IOException {
-//	    int currentTot = 0;
-//	    int bytesRead;
-//	    byte [] bytearray  = new byte [bufferSize];
-//
-//	    InputStream is = socket.getInputStream();
-//	    BufferedOutputStream bos;
-//		bos = getFileOutputStream(SERVER_DOCUMENTROOT+fileName);
-//
-//	    int readLength = bufferSize;
-//	    while(currentTot < totalSize) {
-//	       bytesRead = is.read(bytearray, 0, readLength);
-//
-//	       bos.write(bytearray,  0, bytesRead);
-//	       bos.flush();
-//
-//	       bytearray = new byte [bufferSize];
-//	       currentTot = currentTot + bytesRead;
-//
-//	       if((currentTot+bufferSize) > totalSize) {
-//	    	   readLength = totalSize - currentTot;
-//	       }
-//	    }
-//	}
-	
-	private BufferedOutputStream getFileOutputStream(String fileName) throws FileNotFoundException {
-		FileOutputStream fos = new FileOutputStream(fileName);
-	    BufferedOutputStream bos = new BufferedOutputStream(fos);
-	    return bos;
 	}
 
 	protected void listFolderContent() {
