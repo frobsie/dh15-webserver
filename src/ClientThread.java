@@ -1,12 +1,7 @@
-import sun.security.krb5.Config;
-
-import javax.net.ssl.SSLException;
-import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedInputStream;
@@ -17,8 +12,13 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import javax.net.ssl.SSLException;
 
 public class ClientThread implements Runnable {
 	
@@ -46,6 +46,8 @@ public class ClientThread implements Runnable {
 	private PrintWriter printWriter;
 
     public FileServer fileServer;
+    
+    private Boolean directoryBrowsingAllowed;
 
 	/**
 	 * Setup worker thread with given socket.
@@ -56,6 +58,8 @@ public class ClientThread implements Runnable {
 	public ClientThread(Socket socket, FileServer fileServer) {
 		this.socket = socket;
         this.fileServer = fileServer;
+        
+        directoryBrowsingAllowed = Boolean.valueOf(ConfigPropertyValues.get("directorybrowsing"));
 	}
 
 	/**
@@ -72,9 +76,8 @@ public class ClientThread implements Runnable {
 			bufferedReader = new BufferedReader(inputStreamReader);
 			printWriter = new PrintWriter(socket.getOutputStream(), true);
 
-
             ArrayList<String> lines = readTillEmptyLine();
-
+            
             // only process when there are lines
             if(lines.size() > 0) {
 
@@ -82,7 +85,7 @@ public class ClientThread implements Runnable {
                 readRequestMethod(lines);
             }
 
-            printLine(SERVER_CLOSINGSOCKET + getSocketInfo(), 0);
+			//printLine(SERVER_CLOSINGSOCKET + getSocketInfo(), 0);
 
             // close when there is no more input
 			inputStreamReader.close();
@@ -100,7 +103,7 @@ public class ClientThread implements Runnable {
                 ex.printStackTrace();
             }
             return;
-        } catch(Exception e) {
+		} catch (Exception e) {
 			// TODO
 			e.printStackTrace();
 		}
@@ -147,9 +150,9 @@ public class ClientThread implements Runnable {
 	 * @param protocol
 	 * @throws IOException
 	 */
-	private void handleGet(String uri, String protocol) throws IOException {
+	private void handleGet(String uri, String protocol) throws IOException {		
         // if ask for root get default page (TODO accept multiple defaults)
-        if(uri == "/") {
+        if(uri == "/" && !directoryBrowsingAllowed) {
             uri = ConfigPropertyValues.get("defaultpage");
         }
 
@@ -161,19 +164,38 @@ public class ClientThread implements Runnable {
         //TODO implement http status code
 
         printLine(fullPath, 0);
-        printLine(uri, 1);
 		File file = new File(fullPath);
+		
+		printLine(fullPath, 3);
+		printLine(uri, 1);
+		
+		// Als we directories mogen listen
+		// en de opgevraagde resource is een map
+        if (directoryBrowsingAllowed && isDirectory(file)) {        	
+        	String folderContent = listFolderContent(uri);
+        	sendResponseHeader(200, folderContent.length());
+        	
+            sendLine("");
+            sendLine("");
+            sendLine(folderContent);
+        	return;
+        }
 
-		if (fileExists(file)) {
+        // 
+		if (fileExists(file)) {	        
             // Print Headers
+            // TODO find better solution
             FileResource fr = new FileResource(fullPath);
             sendResponseHeader(200, fr.getByteSize());
 
-            sendFile(fr);
+			sendFile(fr);
             return;
 		}
 
-        // check if uri equals the admin url
+        printLine(uri, 1);
+
+        // TODO
+        // Dit moet anders 
         if(uri.equals(ADMIN_URI)) {
             String form = getManageForm();
             sendResponseHeader(200, form.length());
@@ -184,10 +206,24 @@ public class ClientThread implements Runnable {
             sendLine(form);
             return;
         }
-
-        // No action to do with this request
-        sendResponseHeader(404, 0);
+        
+		// Als de opgevraagde resource niet bestaat
+		// dan 404 tonen
+		plot404();
+		sendResponseHeader(404, 0);
         printLine(ERROR_CLIENT_FILENOTEXISTS, 3);
+	}
+	
+	protected void plot404() throws IOException {
+		String errorPage = ConfigPropertyValues.get("errorpage");
+		String errorPageFullPath = ConfigPropertyValues.get("docroot") + "/" + errorPage;
+
+        FileResource errorFile = new FileResource(errorPageFullPath);
+        sendResponseHeader(200, errorFile.getByteSize());
+
+        sendLine("");
+        sendLine("");
+		sendFile(errorFile);
 	}
 	
 	protected void handlePost(String uri, String protocol, int contentLength) throws IOException, Exception {
@@ -258,6 +294,8 @@ public class ClientThread implements Runnable {
 
     private void sendResponseHeader(int statusCode, int contentLength) {
         String status = null;
+        // TODO
+        // Deze als static constant definen ergens
         switch(statusCode) {
             case 200:
                 status = "200 OK";
@@ -274,6 +312,8 @@ public class ClientThread implements Runnable {
         }
         try {
             sendLine("HTTP/1.1 "+status);
+            // TODO
+            // dit gaat fout bij andere content dan html
             sendLine("Content-Type: text/html");
             sendLine("Content-Length: "+contentLength);
         } catch (IOException e) {
@@ -283,6 +323,13 @@ public class ClientThread implements Runnable {
 
 	private Boolean fileExists(File file) {
 		if (file.exists() && !file.isDirectory()) {
+			return true;
+		}
+		return false;
+	}
+	
+	private Boolean isDirectory(File file) {
+		if (file.exists() && file.isDirectory()) {
 			return true;
 		}
 		return false;
@@ -308,7 +355,7 @@ public class ClientThread implements Runnable {
 	/**
 	 * Sends a file to client using DataOutputStreams
 	 * 
-	 * @param fr
+	 * @param filePath
 	 * @throws IOException
 	 */
 	protected void sendFile(FileResource fr) throws IOException {
@@ -336,8 +383,40 @@ public class ClientThread implements Runnable {
 		dis.close();
 	}
 
-	protected void listFolderContent() {
-		// TODO
+	// TODO
+	// Eventueel parent directory link toevoegen
+	protected String listFolderContent(String uri) {
+		String path = ConfigPropertyValues.get("docroot") + "/" + uri;
+		File f = new File(path);
+		List<File> list = Arrays.asList(f.listFiles());
+		Iterator<File> fileIterator = list.iterator();
+		
+		String fileListingHtml = "<h1>Index of " + path + "</h1>";
+		fileListingHtml += "<table>";
+		fileListingHtml += "<thead style=\"text-align:left;\">";
+		fileListingHtml += "<tr>";
+		fileListingHtml += "<th style=\"padding:10px\">filename</th>";
+		fileListingHtml += "<th style=\"padding:10px\">lastmodified</th>";
+		fileListingHtml += "<th style=\"padding:10px\">size</th>";
+		fileListingHtml += "</tr>";
+		fileListingHtml += "</thead>";
+		
+		while(fileIterator.hasNext()) {
+			File file = fileIterator.next();
+					
+			// Date formatter voor de lastmodified date van de file
+			SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
+			
+			fileListingHtml += "<tr>";
+			fileListingHtml += "<td style=\"padding:10px\"><a href=\""+(uri + "/" + file.getName())+"\">"+file.getName()+"</a></td>";
+			fileListingHtml += "<td style=\"padding:10px\">"+sdf.format(file.lastModified())+"</td>";
+			fileListingHtml += "<td style=\"padding:10px\">"+file.length()+"</td>";
+			fileListingHtml += "</tr>";
+		}
+		
+		fileListingHtml += "</table>";
+		
+		return fileListingHtml;
 	}
 
     protected void printLine(String message, Integer sendType) {

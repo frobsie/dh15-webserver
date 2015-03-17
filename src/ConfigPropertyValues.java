@@ -6,9 +6,7 @@ public class ConfigPropertyValues {
     private static String propFileName = "resources/config.properties";
 
     public static void load() throws IOException {
-        String result = "";
         Properties prop = new Properties();
-
 
         InputStream inputStream = new FileInputStream(ConfigPropertyValues.propFileName);
 
@@ -29,7 +27,4 @@ public class ConfigPropertyValues {
     public static void set(String key, String value) {
         ConfigPropertyValues.props.setProperty(key, value);
     }
-
-
-
 }
