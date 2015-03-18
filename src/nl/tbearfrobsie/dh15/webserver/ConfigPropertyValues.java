@@ -1,4 +1,9 @@
-import java.io.*;
+package nl.tbearfrobsie.dh15.webserver;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 public class ConfigPropertyValues {

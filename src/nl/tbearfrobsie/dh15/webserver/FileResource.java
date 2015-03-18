@@ -1,3 +1,5 @@
+package nl.tbearfrobsie.dh15.webserver;
+
 import java.io.File;
 
 public class FileResource extends File {

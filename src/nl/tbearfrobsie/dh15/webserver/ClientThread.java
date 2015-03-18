@@ -1,7 +1,8 @@
+package nl.tbearfrobsie.dh15.webserver;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedInputStream;
@@ -13,13 +14,13 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URLConnection;
-import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+
 import javax.net.ssl.SSLException;
 
 public class ClientThread implements Runnable {
@@ -120,7 +121,7 @@ public class ClientThread implements Runnable {
     protected void readRequestMethod(ArrayList<String> lines) throws IOException, Exception {
         String line = lines.get(0);
         printLine(line, 2);
-
+        
         // split the input string by whitespace
         String[] lineSplit = line.split(" ");
 
@@ -133,6 +134,7 @@ public class ClientThread implements Runnable {
         String uri = lineSplit[1];
         String protocol = lineSplit[2];
         if(method.equals("GET")) {
+        	Logger.append(Logger.LOG_TYPE_ACCESS, line);
             handleGet(uri, protocol);
         } else if (method.equals("POST")) {
             Integer contentLength = 0;
@@ -391,15 +393,13 @@ public class ClientThread implements Runnable {
 		dis.close();
 	}
 
-	// TODO
-	// Eventueel parent directory link toevoegen
 	protected String listFolderContent(String uri) {
 		String path = ConfigPropertyValues.get("docroot") + "/" + uri;
 		File f = new File(path);
 		List<File> list = Arrays.asList(f.listFiles());
 		Iterator<File> fileIterator = list.iterator();
 		
-		String fileListingHtml = "<h1>Index of " + path + "</h1>";
+		String fileListingHtml = "<h1>Index of " + uri + "</h1>";
 		fileListingHtml += "<table>";
 		fileListingHtml += "<thead style=\"text-align:left;\">";
 		fileListingHtml += "<tr>";
@@ -408,20 +408,53 @@ public class ClientThread implements Runnable {
 		fileListingHtml += "<th style=\"padding:10px\">size</th>";
 		fileListingHtml += "</tr>";
 		fileListingHtml += "</thead>";
+		fileListingHtml += "<tbody>";
+		
+		if (!uri.equals("/")) {
+			// Parent uri opbouwen
+			ArrayList<String> uriParts = new ArrayList<String>(Arrays.asList(uri.split("/")));
+			
+			if ((uriParts.size() -1) > 0) {
+				uriParts.remove(uriParts.size()-1);
+			}
+			
+			Iterator<String> uriIterator = uriParts.iterator();
+			String newUri = "/";
+			
+			while(uriIterator.hasNext()) {
+				String uriPart = uriIterator.next();
+				
+				if (!uriPart.equals("")) {
+					newUri += uriPart + "/";	
+				}
+			}			
+					
+			fileListingHtml += "<tr>";
+			fileListingHtml += "<td style=\"padding:10px\" colspan=\"3\"><a href=\""+newUri+"\">Parent Directory</a></td>";
+			fileListingHtml += "</tr>";
+		}
 		
 		while(fileIterator.hasNext()) {
 			File file = fileIterator.next();
+			String filePath = uri;
+			
+			if (uri.equals("/")) {
+				filePath = uri + file.getName();
+			} else {
+				filePath = uri + "/" +file.getName();
+			}
 					
 			// Date formatter voor de lastmodified date van de file
 			SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
 			
 			fileListingHtml += "<tr>";
-			fileListingHtml += "<td style=\"padding:10px\"><a href=\""+(uri + "/" + file.getName())+"\">"+file.getName()+"</a></td>";
+			fileListingHtml += "<td style=\"padding:10px\"><a href=\""+ filePath +"\">"+file.getName()+"</a></td>";
 			fileListingHtml += "<td style=\"padding:10px\">"+sdf.format(file.lastModified())+"</td>";
 			fileListingHtml += "<td style=\"padding:10px\">"+file.length()+"</td>";
 			fileListingHtml += "</tr>";
 		}
 		
+		fileListingHtml += "</tbody>";
 		fileListingHtml += "</table>";
 		
 		return fileListingHtml;

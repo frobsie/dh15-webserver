@@ -1,3 +1,5 @@
+package nl.tbearfrobsie.dh15.webserver;
+
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocketFactory;
@@ -37,8 +39,11 @@ public class FileServer {
             try {
                 int port = new Integer(ConfigPropertyValues.get("port"));
                 System.out.println(SERVER_STARTED + port);
-
-                createSSLServerSocket();
+                
+                // SSL even uitgezet @ testen
+                //createSSLServerSocket();
+                serverSocket = new ServerSocket(port);
+                
                 while (isRunning) {
                     // accept connections
                     Socket clientSocket = serverSocket.accept();
