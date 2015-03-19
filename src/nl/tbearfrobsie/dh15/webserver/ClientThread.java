@@ -140,10 +140,11 @@ public class ClientThread implements Runnable {
         } else if (method.equals("POST")) {
             Integer contentLength = 0;
             final String contentHeader = "Content-Length: ";
-            String contentLengthString = lines.get(lines.size()-1);
-            if (contentLengthString.startsWith(contentHeader)) {
-                contentLength = Integer.parseInt(contentLengthString.substring(contentHeader.length()));
-            }
+            for(int i = 0; i < lines.size(); i++) {
+            	if (lines.get(i).startsWith(contentHeader)) {
+                    contentLength = Integer.parseInt(lines.get(i).substring(contentHeader.length()));
+                }	
+            }            
             handlePost(uri, protocol, contentLength);
         } else {
         	// All other methods return 400 
