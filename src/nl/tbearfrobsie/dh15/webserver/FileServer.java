@@ -2,13 +2,12 @@ package nl.tbearfrobsie.dh15.webserver;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.io.File;
+import javax.net.ssl.SSLSocket;
+
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.security.KeyStore;
 
 public class FileServer {
@@ -21,7 +20,7 @@ public class FileServer {
     public static String SERVER_ERROR_EXCEPTION = "EXCEPTION THROWN IN THREAD";
 	
 	/** ServerSocket */
-	private ServerSocket serverSocket;
+	private SSLServerSocket serverSocket;
 	
 	/** Is the server running? */
 	public boolean isRunning = true;
@@ -41,12 +40,13 @@ public class FileServer {
                 System.out.println(SERVER_STARTED + port);
                 
                 // SSL even uitgezet @ testen
-                //createSSLServerSocket();
-                serverSocket = new ServerSocket(port);
+                createSSLServerSocket();
+                //serverSocket = new ServerSocket(port);
                 
                 while (isRunning) {
                     // accept connections
-                    Socket clientSocket = serverSocket.accept();
+                	SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
+                    //Socket clientSocket = serverSocket.accept();
 
                     // start new thread for incoming connection
                     Thread t = new Thread(new ClientThread(clientSocket, this));
@@ -67,21 +67,24 @@ public class FileServer {
             String STOREPASSWORD 	= (String) ConfigPropertyValues.get("cert.storepassword");
             String KEYPASSWORD 		= (String) ConfigPropertyValues.get("cert.keypassword");
 
-            KeyStore ks = KeyStore.getInstance( STORETYPE );
-            File kf = new File( KEYSTORE );
-            ks.load( new FileInputStream( kf ), STOREPASSWORD.toCharArray() );
-
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance( "SunX509" );
-            kmf.init( ks, KEYPASSWORD.toCharArray() );
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance( "SunX509" );
-            tmf.init( ks );
-
-            SSLContext sslContext = null;
-            sslContext = SSLContext.getInstance( "TLS" );
-            sslContext.init( kmf.getKeyManagers(), tmf.getTrustManagers(), null );
-            SSLServerSocketFactory socketFactory = sslContext.getServerSocketFactory();
-
-            serverSocket = socketFactory.createServerSocket(port);
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(new FileInputStream(KEYSTORE), "123456".toCharArray());
+            
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(ks, "123456".toCharArray());
+            
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(kmf.getKeyManagers(), null, null);
+            
+            SSLServerSocketFactory ssf = sc.getServerSocketFactory();
+            
+            //Start de socket
+	           try {
+	            this.serverSocket = (SSLServerSocket) ssf.createServerSocket(port);
+	           }	
+	           catch (Exception e) {
+	               throw new Exception("Kan de webserver niet starten op poort " + port + ".");
+	           }
         } catch( Exception e ) {
             e.printStackTrace();
         }
