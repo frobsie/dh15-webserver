@@ -11,13 +11,13 @@ import java.util.Date;
 public class Logger {
 
 	/** Server log file */
-	private static String LOG_FILE_SERVER = "./log/server.log";
+	public static String LOG_FILE_SERVER = "./log/server.log";
 	
 	/** Access log file */
-	private static String LOG_FILE_ACCESS = "./log/access.log";
+	public static String LOG_FILE_ACCESS = "./log/access.log";
 	
 	/** Access log extended file */
-	private static String LOG_FILE_ACCESS_EXTENDED = "./log/access.extended.log";
+	public static String LOG_FILE_ACCESS_EXTENDED = "./log/access.extended.log";
 	
 	/** Log type SERVER */
 	public static final Integer LOG_TYPE_SERVER = 1;

@@ -3,6 +3,7 @@ package nl.tbearfrobsie.dh15.webserver;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedInputStream;
@@ -14,6 +15,8 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +36,7 @@ public class ClientThread implements Runnable {
 	public static String ERROR_CLIENT_FILENOTEXISTS = "File does not exist.";
 
     public static String ADMIN_URI = "/adminerino";
+    public static String URI_SHOWLOG = "/showlog";
 
 	/** The socket on which the client is connected */
 	private Socket socket;
@@ -235,10 +239,47 @@ public class ClientThread implements Runnable {
             return;
         }
         
+        if(uri.equals(URI_SHOWLOG)) {
+        	String log = getLog();
+        	sendResponseHeader(200, log.length());
+        	sendLine(log);
+            return;
+        }
+
 		// Als de opgevraagde resource niet bestaat
 		// dan 404 tonen
 		plot404();
         printLine(ERROR_CLIENT_FILENOTEXISTS, 3);
+	}
+	
+	// TODO
+	// memory management + styling
+	/**
+	 * Opens the access log file, and adds
+	 * some basic html.
+	 * 
+	 * @return String
+	 * @throws IOException
+	 */
+	protected String getLog() throws IOException {
+		String retVal = "<table>"
+				+ "<tbody>";
+
+		FileInputStream fstream = new FileInputStream(Logger.LOG_FILE_ACCESS_EXTENDED);
+		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+
+		String strLine;
+
+		while ((strLine = br.readLine()) != null)   {
+			retVal += "<tr><td>" + strLine + "</td></tr>";
+		}
+
+		br.close();
+		
+		retVal += "</tbody>"
+				+ "</table>";
+		
+		return retVal;
 	}
 
 	/**
@@ -642,7 +683,7 @@ public class ClientThread implements Runnable {
                 }
 
                 admin += "></td></tr>\n" +
-                "    <tr><td><input value=\"Show Log\" type=\"button\"></td>\n" +
+                "    <tr><td><a href=\"" + URI_SHOWLOG + "\">Show log</a></td>\n" +
                 "        <td class=\"right\"><input value=\"OK\" type=\"submit\"></td>\n" +
                 "    </tr>\n" +
                 "</tbody>\n" +
