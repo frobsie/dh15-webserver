@@ -10,14 +10,18 @@ import java.util.Date;
 
 public class Logger {
 
+	public static String MSG_DATE_DELIMITER_START = "[";
+	public static String MSG_DATE_DELIMITER_END = "] ";
+	public static String DEFAULT_DATE_FORMAT = "MM-dd-yyyy HH:mm:ss";
+	
 	/** Server log file */
-	private static String LOG_FILE_SERVER = "./log/server.log";
+	public static String LOG_FILE_SERVER = "./log/server.log";
 	
 	/** Access log file */
-	private static String LOG_FILE_ACCESS = "./log/access.log";
+	public static String LOG_FILE_ACCESS = "./log/access.log";
 	
 	/** Access log extended file */
-	private static String LOG_FILE_ACCESS_EXTENDED = "./log/access.extended.log";
+	public static String LOG_FILE_ACCESS_EXTENDED = "./log/access.extended.log";
 	
 	/** Log type SERVER */
 	public static final Integer LOG_TYPE_SERVER = 1;
@@ -29,7 +33,7 @@ public class Logger {
 	public static final Integer LOG_TYPE_ACCESS_EXTENDED = 3;
 	
 	/** Date format for logging */
-	private static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private static DateFormat dateFormat = new SimpleDateFormat(DEFAULT_DATE_FORMAT);
 	
 	/**
 	 * Probeert om een opgegeven message
@@ -55,7 +59,7 @@ public class Logger {
 	    
 	    try ( PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFile, true))) ) {
 	    	Date date = new Date();
-	        out.print("[" + dateFormat.format(date) +  "] " + message + System.lineSeparator());
+	        out.print(MSG_DATE_DELIMITER_START + dateFormat.format(date) +  MSG_DATE_DELIMITER_END + message + System.lineSeparator());
 	        
 	    } catch (IOException e) {
 	        // TODO

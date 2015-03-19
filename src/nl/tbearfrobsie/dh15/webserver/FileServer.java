@@ -5,7 +5,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManagerFactory;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -18,6 +20,9 @@ public class FileServer {
 	public static String SERVER_ERROR_COULDNOTSTART = "Could not start server.";
 	public static String SERVER_ERROR_COULDNOTREADCONFIG = "Could not read config.";
     public static String SERVER_ERROR_EXCEPTION = "EXCEPTION THROWN IN THREAD";
+    
+    public static String CERTIFICATE_TYPE = "SunX509";
+    public static String CERTIFICATE_CONTEXT = "TLS";
 	
 	/** ServerSocket */
 	private SSLServerSocket serverSocket;
@@ -36,7 +41,7 @@ public class FileServer {
 		while(true) {
             // setup serversocket with port
             try {
-                int port = new Integer(ConfigPropertyValues.get("port"));
+                int port = new Integer(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT));
                 System.out.println(SERVER_STARTED + port);
                 
                 // SSL even uitgezet @ testen
@@ -61,11 +66,11 @@ public class FileServer {
 
     private void createSSLServerSocket() {
         try{
-            int port = new Integer(ConfigPropertyValues.get("port"));
-            String STORETYPE 		= (String) ConfigPropertyValues.get("cert.storetype");
-            String KEYSTORE 		= (String) ConfigPropertyValues.get("cert.keystore");
-            String STOREPASSWORD 	= (String) ConfigPropertyValues.get("cert.storepassword");
-            String KEYPASSWORD 		= (String) ConfigPropertyValues.get("cert.keypassword");
+            int port = new Integer(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT));
+            String STORETYPE 		= (String) ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_CERT_STORETYPE);
+            String KEYSTORE 		= (String) ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_CERT_KEYSTORE);
+            String STOREPASSWORD 	= (String) ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_CERT_STOREPASSWORD);
+            String KEYPASSWORD 		= (String) ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_CERT_KEYPASSWORD);
 
             KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
             ks.load(new FileInputStream(KEYSTORE), "123456".toCharArray());
@@ -85,6 +90,7 @@ public class FileServer {
 	           catch (Exception e) {
 	               throw new Exception("Kan de webserver niet starten op poort " + port + ".");
 	           }
+
         } catch( Exception e ) {
             e.printStackTrace();
         }
