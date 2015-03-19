@@ -232,7 +232,6 @@ public class ClientThread implements Runnable {
     protected String getDefaultpageUri() {
         String[] lineSplit = ConfigPropertyValues.get("defaultpage").split(";");
         for(int i = 0; i < lineSplit.length; i++) {
-            System.out.println(lineSplit[i]);
             File file = new File(ConfigPropertyValues.get("docroot") + "/" + lineSplit[i]);
             if(file.exists()) {
                 return "/" + lineSplit[i];

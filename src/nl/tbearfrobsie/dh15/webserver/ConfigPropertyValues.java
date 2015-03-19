@@ -26,7 +26,8 @@ public class ConfigPropertyValues {
     }
 
     public static String get(String key) {
-        return ConfigPropertyValues.props.getProperty(key);
+    	// replace %3b with ;
+        return ConfigPropertyValues.props.getProperty(key).replace("%3B", ";").replace("%2F", "/");
     }
 
     public static void set(String key, String value) {
