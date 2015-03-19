@@ -360,7 +360,7 @@ public class ClientThread implements Runnable {
      */
     private void sendResponseHeader(int statusCode, int contentLength){
         sendResponseHeader(statusCode, contentLength, "text/html");
-        lastSentStatusCode = statusCode;
+        
     }
 
     /**
@@ -397,7 +397,17 @@ public class ClientThread implements Runnable {
             sendLine("HTTP/1.0 "+status);
             sendLine("Content-Type: "+contentType);
             sendLine("Content-Length: "+contentLength);
+            
+            // Om "MIME-Sniffing" te voorkomen
+            sendLine("X-Content-Type-Options: nosniff");
+            
+            // Om "Clickjacking" te voorkomen
+            sendLine("X-Frame-Options: deny");
+            
             sendLine("");
+            
+            lastSentStatusCode = statusCode;
+            
         } catch (IOException e) {
             e.printStackTrace();
         }
