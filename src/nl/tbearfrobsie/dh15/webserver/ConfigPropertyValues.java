@@ -8,7 +8,25 @@ import java.util.Properties;
 
 public class ConfigPropertyValues {
     public static Properties props;
+    
     private static String propFileName = "resources/config.properties";
+    
+    public static String CONFIG_KEY_DOCROOT = "docroot";
+    public static String CONFIG_KEY_DIRECTORYBROWSING = "directorybrowsing";
+    public static String CONFIG_KEY_DEFAULTPAGE = "defaultpage";
+    public static String CONFIG_KEY_STATUSROOT = "statusroot";
+    public static String CONFIG_KEY_ERRORPAGE = "errorpage";
+    public static String CONFIG_KEY_FORBIDDENPAGE = "forbiddenpage";
+    public static String CONFIG_KEY_BADREQUESTPAGE = "badrequestpage";
+    public static String CONFIG_KEY_PORT = "port";
+    
+    public static String CONFIG_KEY_CERT_STORETYPE = "cert.storetype";
+    public static String CONFIG_KEY_CERT_KEYSTORE = "cert.keystore";
+    public static String CONFIG_KEY_CERT_STOREPASSWORD = "cert.storepassword";
+    public static String CONFIG_KEY_CERT_KEYPASSWORD = "cert.keypassword";
+    
+    public static String CONFIG_VALUE_STR_TRUE = "true";
+    public static String CONFIG_VALUE_STR_FALSE = "false";
 
     public static void load() throws IOException {
         Properties prop = new Properties();
