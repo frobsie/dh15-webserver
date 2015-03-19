@@ -51,6 +51,8 @@ public class ClientThread implements Runnable {
     public FileServer fileServer;
     
     private Boolean directoryBrowsingAllowed;
+    
+    private Integer lastSentStatusCode = -1;
 
 	/**
 	 * Setup worker thread with given socket.
@@ -134,7 +136,6 @@ public class ClientThread implements Runnable {
         String uri = lineSplit[1];
         String protocol = lineSplit[2];
         if(method.equals("GET")) {
-        	Logger.append(Logger.LOG_TYPE_ACCESS, line);
             handleGet(uri, protocol);
         } else if (method.equals("POST")) {
             Integer contentLength = 0;
@@ -145,6 +146,13 @@ public class ClientThread implements Runnable {
             }
             handlePost(uri, protocol, contentLength);
         }
+        
+        Logger.append(Logger.LOG_TYPE_ACCESS, createLogLine(line));
+    }
+    
+    protected String createLogLine(String line) {
+    	String retVal = String.format("%s " + "\"" + line + "\"" + " %s", getSocketInfo(), lastSentStatusCode);
+    	return retVal;
     }
 
 	/**
@@ -303,6 +311,7 @@ public class ClientThread implements Runnable {
 
     private void sendResponseHeader(int statusCode, int contentLength){
         sendResponseHeader(statusCode, contentLength, "text/html");
+        lastSentStatusCode = statusCode;
     }
 
     private void sendResponseHeader(int statusCode, int contentLength, String contentType) {

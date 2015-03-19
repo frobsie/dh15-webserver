@@ -10,14 +10,28 @@ import java.util.Date;
 
 public class Logger {
 
+	/** Server log file */
 	private static String LOG_FILE_SERVER = "./log/server.log";
+	
+	/** Access log file */
 	private static String LOG_FILE_ACCESS = "./log/access.log";
 	
+	/** Log type SERVER */
 	public static final Integer LOG_TYPE_SERVER = 1;
+	
+	/** Log type ACCESS */
 	public static final Integer LOG_TYPE_ACCESS = 2;
 	
+	/** Date format for logging */
 	private static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
+	/**
+	 * Probeert om een opgegeven message
+	 * toe te voegen aan een log file.
+	 * 
+	 * @param type
+	 * @param message
+	 */
 	public static void append(Integer type, String message) {
 	    String logFile = "";
 
