@@ -3,7 +3,6 @@ package nl.tbearfrobsie.dh15.webserver;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedInputStream;
@@ -15,8 +14,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URLConnection;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,12 +28,47 @@ public class ClientThread implements Runnable {
 	public static Integer bufferSize = 128;
 	public static String SERVER_OPENEDSOCKET = "Socket opened: ";
 	public static String SERVER_CLOSINGSOCKET = "Closing socket: ";
+	public static String SERVER_STDOUT_SERVER = "[SERVER] ";
+	public static String SERVER_STDOUT_SEND = "[SEND]   ";
+	public static String SERVER_STDOUT_RECV = "[RECV]   ";
+	public static String SERVER_STDOUT_ERROR = "[ERROR]  ";
+	
+	public static String DEFAULT_DATE_FORMAT = "MM-dd-yyyy HH:mm:ss";
 
 	public static String ERROR_CLIENT_CLOSED_CONNECTION = "Error : Client closed connection.";
 	public static String ERROR_CLIENT_FILENOTEXISTS = "File does not exist.";
 
     public static String ADMIN_URI = "/adminerino";
     public static String URI_SHOWLOG = "/showlog";
+    public static String EMPTY_STR = "";
+    
+    public static String EXCEPTION_SSL = "Location: https://127.0.0.1:8021";
+    
+    public static String MSG_PROTOCOL_GET = "GET";
+    public static String MSG_PROTOCOL_POST = "POST";
+    
+    public static String MSG_PROTOCOL_HEADER_HTTP = "HTTP/1.0 ";
+    public static String MSG_PROTOCOL_HEADER_CONTENTTYPE = "Content-Type: ";
+    public static String MSG_PROTOCOL_HEADER_CONTENTLENGTH = "Content-Length: ";
+    public static String MSG_PROTOCOL_HEADER_NOSNIFF = "X-Content-Type-Options: nosniff";
+    public static String MSG_PROTOCOL_HEADER_CLICKJACK = "X-Frame-Options: deny";
+    
+    public static String MSG_URI_ROOT = "/";
+    public static String MSG_URI_PARENTFOLDER = "../";
+    public static String MSG_PROTOCOL_DEFAULTMIMETYPE = "text/html";
+	public static String MSG_SOCKINFO_DELIMITER_START = "[";
+	public static String MSG_SOCKINFO_DELIMITER_END = "] ";
+    
+    public static String URI_DELIMITER = "/";
+    public static String URI_SPLIT_DELIMITER = "&";
+    public static String URI_SPLIT_DELIMITER_VALUE = "=";
+    
+    public static String STATUSCODE_200_STR = "200 Ok";
+    public static String STATUSCODE_203_STR = "203 No Content";
+    public static String STATUSCODE_301_STR = "301 Moved Permanently";
+    public static String STATUSCODE_400_STR = "400 Bad Request";
+    public static String STATUSCODE_403_STR = "403 Forbidden";
+    public static String STATUSCODE_404_STR = "404 Not Found";
 
 	/** The socket on which the client is connected */
 	private Socket socket;
@@ -68,7 +100,7 @@ public class ClientThread implements Runnable {
 		this.socket = socket;
         this.fileServer = fileServer;
         
-        directoryBrowsingAllowed = Boolean.valueOf(ConfigPropertyValues.get("directorybrowsing"));
+        directoryBrowsingAllowed = Boolean.valueOf(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING));
 	}
 
 	/**
@@ -106,7 +138,7 @@ public class ClientThread implements Runnable {
             //TODO fix isn't working at all
             sendResponseHeader(301, 0);
             try {
-                sendLine("Location: https://127.0.0.1:8021");
+                sendLine(EXCEPTION_SSL);
             } catch(IOException ex) {
                 ex.printStackTrace();
             }
@@ -139,11 +171,11 @@ public class ClientThread implements Runnable {
         String method = lineSplit[0];
         String uri = lineSplit[1];
         String protocol = lineSplit[2];
-        if(method.equals("GET")) {
+        if(method.equals(MSG_PROTOCOL_GET)) {
             handleGet(uri, protocol);
-        } else if (method.equals("POST")) {
+        } else if (method.equals(MSG_PROTOCOL_POST)) {
             Integer contentLength = 0;
-            final String contentHeader = "Content-Length: ";
+            final String contentHeader = MSG_PROTOCOL_HEADER_CONTENTLENGTH;
             for(int i = 0; i < lines.size(); i++) {
             	if (lines.get(i).startsWith(contentHeader)) {
                     contentLength = Integer.parseInt(lines.get(i).substring(contentHeader.length()));
@@ -165,7 +197,7 @@ public class ClientThread implements Runnable {
     }
     
     protected String createAccessLogExtendedLine(List<String> lines) {
-    	String retVal = ""; 
+    	String retVal = EMPTY_STR; 
     	
     	Iterator<String> it = lines.iterator();
     	while(it.hasNext()) {
@@ -188,14 +220,14 @@ public class ClientThread implements Runnable {
 	 */
 	private void handleGet(String uri, String protocol) throws IOException {		
         // if ask for root get default page (TODO accept multiple defaults)
-        if(uri.equals("/") && !directoryBrowsingAllowed) {
+        if(uri.equals(MSG_URI_ROOT) && !directoryBrowsingAllowed) {
             uri = getDefaultpageUri();
         }
 
-        String fullPath = ConfigPropertyValues.get("docroot") + uri;
+        String fullPath = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + uri;
        
         // check if fullpath contains ../ (can cause directory scanning issues)
-        if(fullPath.contains("../")) {
+        if(fullPath.contains(MSG_URI_PARENTFOLDER)) {
         	plot403();
         	return;
         }
@@ -287,14 +319,14 @@ public class ClientThread implements Runnable {
 	 * @return String 
 	 */
     protected String getDefaultpageUri() {
-        String[] lineSplit = ConfigPropertyValues.get("defaultpage").split(";");
+        String[] lineSplit = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE).split(";");
         for(int i = 0; i < lineSplit.length; i++) {
-            File file = new File(ConfigPropertyValues.get("docroot") + "/" + lineSplit[i]);
+            File file = new File(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + URI_DELIMITER + lineSplit[i]);
             if(file.exists()) {
-                return "/" + lineSplit[i];
+                return URI_DELIMITER + lineSplit[i];
             }
         }
-        return "/" + lineSplit[0];
+        return URI_DELIMITER + lineSplit[0];
     }
 	
     /**
@@ -302,7 +334,7 @@ public class ClientThread implements Runnable {
      * @throws IOException
      */
 	protected void plot404() throws IOException {
-		String fullPath =  ConfigPropertyValues.get("statusroot") + "/" + ConfigPropertyValues.get("errorpage");
+		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_ERRORPAGE);
 
         FileResource errorFile = new FileResource(fullPath);
         sendResponseHeader(404, errorFile.getByteSize(), getContentType(errorFile));
@@ -314,7 +346,7 @@ public class ClientThread implements Runnable {
      * @throws IOException
      */
 	protected void plot403() throws IOException {
-		String fullPath =  ConfigPropertyValues.get("statusroot") + "/" + ConfigPropertyValues.get("forbiddenpage");
+		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_FORBIDDENPAGE);
 
         FileResource errorFile = new FileResource(fullPath);
         sendResponseHeader(403, errorFile.getByteSize(), getContentType(errorFile));
@@ -326,7 +358,7 @@ public class ClientThread implements Runnable {
      * @throws IOException
      */
 	protected void plot400() throws IOException {
-		String fullPath =  ConfigPropertyValues.get("statusroot") + "/" + ConfigPropertyValues.get("badrequestpage");
+		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_BADREQUESTPAGE);
 
         FileResource errorFile = new FileResource(fullPath);
         sendResponseHeader(400, errorFile.getByteSize(), getContentType(errorFile));
@@ -348,9 +380,9 @@ public class ClientThread implements Runnable {
         if(contentLength > 0) {
             char[] data = new char[contentLength];
             bufferedReader.read(data);
-            String[] rawPost = (new String(data)).split("&");
+            String[] rawPost = (new String(data)).split(URI_SPLIT_DELIMITER);
             for(int i = 0; i < rawPost.length; i++) {
-                String[] split = rawPost[i].split("=");
+                String[] split = rawPost[i].split(URI_SPLIT_DELIMITER_VALUE);
                 String value = null;
                 // no value given
                 if(split.length == 2) {
@@ -363,19 +395,20 @@ public class ClientThread implements Runnable {
         if(uri.equals(ADMIN_URI)) {
             printLine(post.toString(),2);
             // UGLY :D
-            if(post.containsKey("port")) {
-                ConfigPropertyValues.set("port", new Integer(post.get("port")).toString());
+            // - joh echt?
+            if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_PORT)) {
+                ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_PORT, new Integer(post.get(ConfigPropertyValues.CONFIG_KEY_PORT)).toString());
             }
-            if(post.containsKey("docroot")) {
-                ConfigPropertyValues.set("docroot", post.get("docroot"));
+            if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_DOCROOT)) {
+                ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DOCROOT, post.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT));
             }
-            if(post.containsKey("defaultpage")) {
-                ConfigPropertyValues.set("defaultpage", post.get("defaultpage"));
+            if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE)) {
+                ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE, post.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE));
             }
-            if(post.containsKey("directorybrowsing")) {
-                ConfigPropertyValues.set("directorybrowsing", "true");
+            if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING)) {
+                ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING, ConfigPropertyValues.CONFIG_VALUE_STR_TRUE);
             } else {
-                ConfigPropertyValues.set("directorybrowsing", "false");
+                ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING, ConfigPropertyValues.CONFIG_VALUE_STR_FALSE);
             }
             ConfigPropertyValues.write();
             sendResponseHeader(203, 0);
@@ -416,7 +449,7 @@ public class ClientThread implements Runnable {
      * @param contentLength
      */
     private void sendResponseHeader(int statusCode, int contentLength){
-        sendResponseHeader(statusCode, contentLength, "text/html");
+        sendResponseHeader(statusCode, contentLength, MSG_PROTOCOL_DEFAULTMIMETYPE);
         
     }
 
@@ -428,40 +461,39 @@ public class ClientThread implements Runnable {
      */
     private void sendResponseHeader(int statusCode, int contentLength, String contentType) {
         String status = null;
-        // TODO
-        // Deze als static constant definen ergens
+
         switch(statusCode) {
             case 200:
-                status = "200 Ok";
+                status = STATUSCODE_200_STR;
                 break;
             case 203:
-                status = "203 No Content";
+                status = STATUSCODE_203_STR;
                 break;
             case 301:
-                status = "301 Moved Permanently";
+                status = STATUSCODE_301_STR;
                 break;
             case 400:
-            	status = "400 Bad Request";
+            	status = STATUSCODE_400_STR;
             	break;
             case 403:
-                status = "403 Forbidden";
+                status = STATUSCODE_403_STR;
                 break;    
             case 404:
-                status = "404 Not Found";
+                status = STATUSCODE_404_STR;
                 break;
         }
         try {
-            sendLine("HTTP/1.0 "+status);
-            sendLine("Content-Type: "+contentType);
-            sendLine("Content-Length: "+contentLength);
+            sendLine(MSG_PROTOCOL_HEADER_HTTP + status);
+            sendLine(MSG_PROTOCOL_HEADER_CONTENTTYPE + contentType);
+            sendLine(MSG_PROTOCOL_HEADER_CONTENTLENGTH + contentLength);
             
             // Om "MIME-Sniffing" te voorkomen
-            sendLine("X-Content-Type-Options: nosniff");
+            sendLine(MSG_PROTOCOL_HEADER_NOSNIFF);
             
             // Om "Clickjacking" te voorkomen
-            sendLine("X-Frame-Options: deny");
+            sendLine(MSG_PROTOCOL_HEADER_CLICKJACK);
             
-            sendLine("");
+            sendLine(EMPTY_STR);
             
             lastSentStatusCode = statusCode;
             
@@ -500,7 +532,7 @@ public class ClientThread implements Runnable {
 	 */
 	protected String getSocketInfo() {
 		String retVal = socket.getInetAddress() + ":" + socket.getPort();
-		return retVal.replace("/", "");
+		return retVal.replace(URI_DELIMITER, EMPTY_STR);
 	}
 
 	/**
@@ -559,7 +591,7 @@ public class ClientThread implements Runnable {
 	 * @return
 	 */
 	protected String listFolderContent(String uri) {
-		String path = ConfigPropertyValues.get("docroot") + "/" + uri;
+		String path = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + URI_DELIMITER + uri;
 		File f = new File(path);
 		List<File> list = Arrays.asList(f.listFiles());
 		Iterator<File> fileIterator = list.iterator();
@@ -575,22 +607,22 @@ public class ClientThread implements Runnable {
 		fileListingHtml += "</thead>";
 		fileListingHtml += "<tbody>";
 		
-		if (!uri.equals("/")) {
+		if (!uri.equals(URI_DELIMITER)) {
 			// Parent uri opbouwen
-			ArrayList<String> uriParts = new ArrayList<String>(Arrays.asList(uri.split("/")));
+			ArrayList<String> uriParts = new ArrayList<String>(Arrays.asList(uri.split(URI_DELIMITER)));
 			
 			if ((uriParts.size() -1) > 0) {
 				uriParts.remove(uriParts.size()-1);
 			}
 			
 			Iterator<String> uriIterator = uriParts.iterator();
-			String newUri = "/";
+			String newUri = URI_DELIMITER;
 			
 			while(uriIterator.hasNext()) {
 				String uriPart = uriIterator.next();
 				
-				if (!uriPart.equals("")) {
-					newUri += uriPart + "/";	
+				if (!uriPart.equals(EMPTY_STR)) {
+					newUri += uriPart + URI_DELIMITER;	
 				}
 			}			
 					
@@ -599,18 +631,18 @@ public class ClientThread implements Runnable {
 			fileListingHtml += "</tr>";
 		}
 		
+		// Date formatter voor de lastmodified date van de file
+		SimpleDateFormat sdf = new SimpleDateFormat(DEFAULT_DATE_FORMAT);
+		
 		while(fileIterator.hasNext()) {
 			File file = fileIterator.next();
 			String filePath = uri;
 			
-			if (uri.equals("/")) {
+			if (uri.equals(URI_DELIMITER)) {
 				filePath = uri + file.getName();
 			} else {
-				filePath = uri + "/" +file.getName();
+				filePath = uri + URI_DELIMITER +file.getName();
 			}
-					
-			// Date formatter voor de lastmodified date van de file
-			SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
 			
 			fileListingHtml += "<tr>";
 			fileListingHtml += "<td style=\"padding:10px\"><a href=\""+ filePath +"\">"+file.getName()+"</a></td>";
@@ -631,25 +663,25 @@ public class ClientThread implements Runnable {
 	 * @param sendType
 	 */
     protected void printLine(String message, Integer sendType) {
-        String fm = "";
+        String fm = EMPTY_STR;
 
         switch (sendType) {
             default:
             case 0:
-                fm += "[SERVER] ";
+                fm += SERVER_STDOUT_SERVER;
                 break;
             case 1:
-                fm += "[SEND]   ";
+                fm += SERVER_STDOUT_SEND;
                 break;
             case 2:
-                fm += "[RECV]   ";
+                fm += SERVER_STDOUT_RECV;
                 break;
             case 3:
-                fm += "[ERROR]  ";
+                fm += SERVER_STDOUT_ERROR;
                 break;
         }
 
-        fm += "[" + getSocketInfo() + "] ";
+        fm += MSG_SOCKINFO_DELIMITER_START + getSocketInfo() + MSG_SOCKINFO_DELIMITER_END;
         fm += message;
 
         System.out.println(fm);
@@ -669,16 +701,16 @@ public class ClientThread implements Runnable {
                 "</thead>\n" +
                 "<tbody>\n" +
                 "    <tr><td>Web port:</td><td><input name=\"port\" value=\"" +
-                ""+ ConfigPropertyValues.get("port")+"" +
+                ""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT)+"" +
                 "\" type=\"text\"></td></tr>\n" +
                 "    <tr><td>Webroot:</td><td><input name=\"docroot\" value=\"" +
-                ""+ ConfigPropertyValues.get("docroot")+"" +
+                ""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT)+"" +
                 "\" type=\"text\"></td></tr>\n" +
                 "    <tr><td>Default page:</td><td><input name=\"defaultpage\" value=\"" +
-                ""+ ConfigPropertyValues.get("defaultpage")+"" +
+                ""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE)+"" +
                 "\" type=\"text\"></td></tr>\n" +
                 "    <tr><td>Directory browsing</td><td><input name=\"directorybrowsing\" type=\"checkbox\"";
-                if(ConfigPropertyValues.get("directorybrowsing").equals("true")) {
+                if(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING).equals(ConfigPropertyValues.CONFIG_VALUE_STR_TRUE)) {
                     admin += " checked=\"checked\"";
                 }
 

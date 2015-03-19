@@ -4,6 +4,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -19,6 +20,9 @@ public class FileServer {
 	public static String SERVER_ERROR_COULDNOTSTART = "Could not start server.";
 	public static String SERVER_ERROR_COULDNOTREADCONFIG = "Could not read config.";
     public static String SERVER_ERROR_EXCEPTION = "EXCEPTION THROWN IN THREAD";
+    
+    public static String CERTIFICATE_TYPE = "SunX509";
+    public static String CERTIFICATE_CONTEXT = "TLS";
 	
 	/** ServerSocket */
 	private ServerSocket serverSocket;
@@ -37,7 +41,7 @@ public class FileServer {
 		while(true) {
             // setup serversocket with port
             try {
-                int port = new Integer(ConfigPropertyValues.get("port"));
+                int port = new Integer(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT));
                 System.out.println(SERVER_STARTED + port);
                 
                 // SSL even uitgezet @ testen
@@ -61,23 +65,23 @@ public class FileServer {
 
     private void createSSLServerSocket() {
         try{
-            int port = new Integer(ConfigPropertyValues.get("port"));
-            String STORETYPE 		= (String) ConfigPropertyValues.get("cert.storetype");
-            String KEYSTORE 		= (String) ConfigPropertyValues.get("cert.keystore");
-            String STOREPASSWORD 	= (String) ConfigPropertyValues.get("cert.storepassword");
-            String KEYPASSWORD 		= (String) ConfigPropertyValues.get("cert.keypassword");
+            int port = new Integer(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT));
+            String STORETYPE 		= (String) ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_CERT_STORETYPE);
+            String KEYSTORE 		= (String) ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_CERT_KEYSTORE);
+            String STOREPASSWORD 	= (String) ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_CERT_STOREPASSWORD);
+            String KEYPASSWORD 		= (String) ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_CERT_KEYPASSWORD);
 
             KeyStore ks = KeyStore.getInstance( STORETYPE );
             File kf = new File( KEYSTORE );
             ks.load( new FileInputStream( kf ), STOREPASSWORD.toCharArray() );
 
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance( "SunX509" );
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance( CERTIFICATE_TYPE );
             kmf.init( ks, KEYPASSWORD.toCharArray() );
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance( "SunX509" );
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance( CERTIFICATE_TYPE );
             tmf.init( ks );
 
             SSLContext sslContext = null;
-            sslContext = SSLContext.getInstance( "TLS" );
+            sslContext = SSLContext.getInstance( CERTIFICATE_CONTEXT );
             sslContext.init( kmf.getKeyManagers(), tmf.getTrustManagers(), null );
             SSLServerSocketFactory socketFactory = sslContext.getServerSocketFactory();
 
