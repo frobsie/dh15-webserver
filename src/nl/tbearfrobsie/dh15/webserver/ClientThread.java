@@ -85,12 +85,11 @@ public class ClientThread implements Runnable {
             
             // only process when there are lines
             if(lines.size() > 0) {
-
                 //read first line
                 readRequestMethod(lines);
             }
 
-			//printLine(SERVER_CLOSINGSOCKET + getSocketInfo(), 0);
+			printLine(SERVER_CLOSINGSOCKET + getSocketInfo(), 0);
 
             // close when there is no more input
 			inputStreamReader.close();
@@ -129,7 +128,7 @@ public class ClientThread implements Runnable {
 
         // should have 3 indexes (method uri protocol)
         if (lineSplit.length < 2) {
-        	sendResponseHeader(400, 0);
+        	plot400();
             return;
         }
 
@@ -147,7 +146,8 @@ public class ClientThread implements Runnable {
             }
             handlePost(uri, protocol, contentLength);
         } else {
-        	sendResponseHeader(400, 0);
+        	// All other methods return 400 
+        	plot400();
         }
         
         Logger.append(Logger.LOG_TYPE_ACCESS, createLogLine(line));
@@ -175,11 +175,10 @@ public class ClientThread implements Runnable {
        
         // check if fullpath contains ../ (can cause directory scanning issues)
         if(fullPath.contains("../")) {
-        	sendResponseHeader(403, 0);
+        	plot403();
         	return;
         }
 
-        //TODO if fullPath is not permitted return 403
         printLine(fullPath, 0);
 		File file = new File(fullPath);
 		
@@ -246,11 +245,34 @@ public class ClientThread implements Runnable {
      * @throws IOException
      */
 	protected void plot404() throws IOException {
-		String errorPage = ConfigPropertyValues.get("errorpage");
-		String errorPageFullPath = ConfigPropertyValues.get("docroot") + "/" + errorPage;
+		String fullPath =  ConfigPropertyValues.get("statusroot") + "/" + ConfigPropertyValues.get("errorpage");
 
-        FileResource errorFile = new FileResource(errorPageFullPath);
+        FileResource errorFile = new FileResource(fullPath);
         sendResponseHeader(404, errorFile.getByteSize(), getContentType(errorFile));
+		sendFile(errorFile);
+	}
+	
+	/**
+     * send 403 page to the user.
+     * @throws IOException
+     */
+	protected void plot403() throws IOException {
+		String fullPath =  ConfigPropertyValues.get("statusroot") + "/" + ConfigPropertyValues.get("forbiddenpage");
+
+        FileResource errorFile = new FileResource(fullPath);
+        sendResponseHeader(403, errorFile.getByteSize(), getContentType(errorFile));
+		sendFile(errorFile);
+	}
+	
+	/**
+     * send 400 page to the user.
+     * @throws IOException
+     */
+	protected void plot400() throws IOException {
+		String fullPath =  ConfigPropertyValues.get("statusroot") + "/" + ConfigPropertyValues.get("badrequestpage");
+
+        FileResource errorFile = new FileResource(fullPath);
+        sendResponseHeader(400, errorFile.getByteSize(), getContentType(errorFile));
 		sendFile(errorFile);
 	}
 	
@@ -372,7 +394,7 @@ public class ClientThread implements Runnable {
                 break;
         }
         try {
-            sendLine("HTTP/1.1 "+status);
+            sendLine("HTTP/1.0 "+status);
             sendLine("Content-Type: "+contentType);
             sendLine("Content-Length: "+contentLength);
             sendLine("");
