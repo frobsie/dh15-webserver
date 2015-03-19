@@ -127,6 +127,7 @@ public class ClientThread implements Runnable {
 
         // should have 3 indexes (method uri protocol)
         if (lineSplit.length < 2) {
+        	sendResponseHeader(400, 0);
             return;
         }
 
@@ -144,6 +145,8 @@ public class ClientThread implements Runnable {
                 contentLength = Integer.parseInt(contentLengthString.substring(contentHeader.length()));
             }
             handlePost(uri, protocol, contentLength);
+        } else {
+        	sendResponseHeader(400, 0);
         }
     }
 
@@ -161,7 +164,8 @@ public class ClientThread implements Runnable {
         }
 
         String fullPath = ConfigPropertyValues.get("docroot") + uri;
-        
+       
+        // check if fullpath contains ../ (can cause directory scanning issues)
         if(fullPath.contains("../")) {
         	sendResponseHeader(403, 0);
         	return;
@@ -180,8 +184,6 @@ public class ClientThread implements Runnable {
         	String folderContent = listFolderContent(uri);
         	sendResponseHeader(200, folderContent.length());
         	
-            sendLine("");
-            sendLine("");
             sendLine(folderContent);
         	return;
         }
@@ -205,9 +207,6 @@ public class ClientThread implements Runnable {
             String form = getManageForm();
             sendResponseHeader(200, form.length());
 
-            //Print double linebreak to tell browser content is starting
-            sendLine("");
-            sendLine("");
             sendLine(form);
             return;
         }
@@ -215,7 +214,6 @@ public class ClientThread implements Runnable {
 		// Als de opgevraagde resource niet bestaat
 		// dan 404 tonen
 		plot404();
-		sendResponseHeader(404, 0);
         printLine(ERROR_CLIENT_FILENOTEXISTS, 3);
 	}
 
@@ -244,10 +242,7 @@ public class ClientThread implements Runnable {
 		String errorPageFullPath = ConfigPropertyValues.get("docroot") + "/" + errorPage;
 
         FileResource errorFile = new FileResource(errorPageFullPath);
-        sendResponseHeader(200, errorFile.getByteSize(), getContentType(errorFile));
-
-        sendLine("");
-        sendLine("");
+        sendResponseHeader(404, errorFile.getByteSize(), getContentType(errorFile));
 		sendFile(errorFile);
 	}
 	
@@ -352,22 +347,26 @@ public class ClientThread implements Runnable {
                 status = "200 Ok";
                 break;
             case 203:
-                status = "203 No content";
+                status = "203 No Content";
                 break;
             case 301:
                 status = "301 Moved Permanently";
                 break;
+            case 400:
+            	status = "400 Bad Request";
+            	break;
             case 403:
                 status = "403 Forbidden";
                 break;    
             case 404:
-                status = "404 Not found";
+                status = "404 Not Found";
                 break;
         }
         try {
             sendLine("HTTP/1.1 "+status);
             sendLine("Content-Type: "+contentType);
             sendLine("Content-Length: "+contentLength);
+            sendLine("");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -436,9 +435,6 @@ public class ClientThread implements Runnable {
 	 * @throws IOException
 	 */
 	protected void sendFile(FileResource fr) throws IOException {
-        //Print single linebreak to tell browser content is starting
-        sendLine("");
-
 		// setup
 		FileInputStream fis = new FileInputStream(fr);
 		BufferedInputStream bis = new BufferedInputStream(fis, bufferSize);
