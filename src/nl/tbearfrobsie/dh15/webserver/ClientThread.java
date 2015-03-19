@@ -3,6 +3,7 @@ package nl.tbearfrobsie.dh15.webserver;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedInputStream;
@@ -40,6 +41,8 @@ public class ClientThread implements Runnable {
 
     public static String ADMIN_URI = "/adminerino";
     public static String URI_SHOWLOG = "/showlog";
+    public static String URI_CLEARLOGS = "/clearlogs";
+
     public static String EMPTY_STR = "";
     
     public static String EXCEPTION_SSL = "Location: https://127.0.0.1:8021";
@@ -58,6 +61,7 @@ public class ClientThread implements Runnable {
     public static String MSG_PROTOCOL_DEFAULTMIMETYPE = "text/html";
 	public static String MSG_SOCKINFO_DELIMITER_START = "[";
 	public static String MSG_SOCKINFO_DELIMITER_END = "] ";
+	public static String MSG_LOGS_CLEARED = "Logs cleared.";
     
     public static String URI_DELIMITER = "/";
     public static String URI_SPLIT_DELIMITER = "&";
@@ -277,6 +281,14 @@ public class ClientThread implements Runnable {
         	sendLine(log);
             return;
         }
+        
+        if(uri.equals(URI_CLEARLOGS)) {
+        	String cleared = MSG_LOGS_CLEARED;
+        	clearLogFiles();
+        	sendResponseHeader(200, cleared.length());
+        	sendLine(cleared);
+            return;
+        }
 
 		// Als de opgevraagde resource niet bestaat
 		// dan 404 tonen
@@ -312,6 +324,17 @@ public class ClientThread implements Runnable {
 				+ "</table>";
 		
 		return retVal;
+	}
+	
+	protected void clearLogFiles() throws FileNotFoundException {
+		PrintWriter a = new PrintWriter(Logger.LOG_FILE_ACCESS);
+		PrintWriter ax = new PrintWriter(Logger.LOG_FILE_ACCESS_EXTENDED);
+		
+		a.print(EMPTY_STR);
+		ax.print(EMPTY_STR);
+
+		a.close();
+		ax.close();
 	}
 
 	/**
@@ -717,6 +740,8 @@ public class ClientThread implements Runnable {
                 admin += "></td></tr>\n" +
                 "    <tr><td><a href=\"" + URI_SHOWLOG + "\">Show log</a></td>\n" +
                 "        <td class=\"right\"><input value=\"OK\" type=\"submit\"></td>\n" +
+                "    </tr>\n" +
+                "    <tr><td><a href=\"" + URI_CLEARLOGS + "\">Clear logs</a></td>\n" +
                 "    </tr>\n" +
                 "</tbody>\n" +
                 "</table>\n" +
