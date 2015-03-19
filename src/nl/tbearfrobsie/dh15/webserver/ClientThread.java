@@ -372,7 +372,7 @@ public class ClientThread implements Runnable {
                 break;
         }
         try {
-            sendLine("HTTP/1.0 "+status);
+            sendLine("HTTP/1.1 "+status);
             sendLine("Content-Type: "+contentType);
             sendLine("Content-Length: "+contentLength);
             
