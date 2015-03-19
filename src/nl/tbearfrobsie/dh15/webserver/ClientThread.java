@@ -161,6 +161,11 @@ public class ClientThread implements Runnable {
         }
 
         String fullPath = ConfigPropertyValues.get("docroot") + uri;
+        
+        if(fullPath.contains("../")) {
+        	sendResponseHeader(403, 0);
+        	return;
+        }
 
         //TODO if fullPath is not permitted return 403
         printLine(fullPath, 0);
@@ -214,6 +219,10 @@ public class ClientThread implements Runnable {
         printLine(ERROR_CLIENT_FILENOTEXISTS, 3);
 	}
 
+	/**
+	 * Collect the default page from the config and check if one of the options exists.
+	 * @return String 
+	 */
     protected String getDefaultpageUri() {
         String[] lineSplit = ConfigPropertyValues.get("defaultpage").split(";");
         for(int i = 0; i < lineSplit.length; i++) {
@@ -226,6 +235,10 @@ public class ClientThread implements Runnable {
         return "/" + lineSplit[0];
     }
 	
+    /**
+     * send 404 page to the user.
+     * @throws IOException
+     */
 	protected void plot404() throws IOException {
 		String errorPage = ConfigPropertyValues.get("errorpage");
 		String errorPageFullPath = ConfigPropertyValues.get("docroot") + "/" + errorPage;
@@ -238,6 +251,14 @@ public class ClientThread implements Runnable {
 		sendFile(errorFile);
 	}
 	
+	/**
+	 * Handle POST requests 
+	 * @param uri
+	 * @param protocol
+	 * @param contentLength
+	 * @throws IOException
+	 * @throws Exception
+	 */
 	protected void handlePost(String uri, String protocol, int contentLength) throws IOException, Exception {
         printLine(uri,2);
 
@@ -289,6 +310,12 @@ public class ClientThread implements Runnable {
 
 	}
 
+	/**
+	 * Read socket till an blank line is found
+	 * There is a blank line between the headers and the content
+	 * @return
+	 * @throws IOException
+	 */
     private ArrayList<String> readTillEmptyLine() throws IOException {
         ArrayList<String> lines = new ArrayList<String>();
         String line = bufferedReader.readLine();
@@ -301,26 +328,40 @@ public class ClientThread implements Runnable {
         return lines;
     }
 
+    /**
+     * send response headers to the client
+     * @param statusCode
+     * @param contentLength
+     */
     private void sendResponseHeader(int statusCode, int contentLength){
         sendResponseHeader(statusCode, contentLength, "text/html");
     }
 
+    /**
+     * send response headers to the client
+     * @param statusCode
+     * @param contentLength
+     * @param contentType
+     */
     private void sendResponseHeader(int statusCode, int contentLength, String contentType) {
         String status = null;
         // TODO
         // Deze als static constant definen ergens
         switch(statusCode) {
             case 200:
-                status = "200 OK";
+                status = "200 Ok";
                 break;
             case 203:
-                status = "203 NO CONTENT";
+                status = "203 No content";
                 break;
             case 301:
                 status = "301 Moved Permanently";
                 break;
+            case 403:
+                status = "403 Forbidden";
+                break;    
             case 404:
-                status = "404 NO FOUND";
+                status = "404 Not found";
                 break;
         }
         try {
@@ -332,6 +373,11 @@ public class ClientThread implements Runnable {
         }
     }
 
+    /**
+     * Check if file exists and is not a directory
+     * @param file
+     * @return
+     */
 	private Boolean fileExists(File file) {
 		if (file.exists() && !file.isDirectory()) {
 			return true;
@@ -339,6 +385,11 @@ public class ClientThread implements Runnable {
 		return false;
 	}
 	
+	/**
+	 * Check if directory exists
+	 * @param file
+	 * @return
+	 */
 	private Boolean isDirectory(File file) {
 		if (file.exists() && file.isDirectory()) {
 			return true;
@@ -346,15 +397,30 @@ public class ClientThread implements Runnable {
 		return false;
 	}
 
+	/**
+	 * get the socket information formatted
+	 * @return
+	 */
 	protected String getSocketInfo() {
 		String retVal = socket.getInetAddress() + ":" + socket.getPort();
 		return retVal.replace("/", "");
 	}
 
+	/**
+	 * Send line to client
+	 * @param message
+	 * @throws IOException
+	 */
 	protected void sendLine(String message) throws IOException {
 		sendLine(message, false);
 	}
 
+	/**
+	 * send line to client
+	 * @param message
+	 * @param toOut
+	 * @throws IOException
+	 */
 	protected void sendLine(String message, boolean toOut) throws IOException {
 		printWriter.println(message);
 
@@ -393,6 +459,11 @@ public class ClientThread implements Runnable {
 		dis.close();
 	}
 
+	/**
+	 * Build and send directory structure to client for the given uri
+	 * @param uri
+	 * @return
+	 */
 	protected String listFolderContent(String uri) {
 		String path = ConfigPropertyValues.get("docroot") + "/" + uri;
 		File f = new File(path);
@@ -460,6 +531,11 @@ public class ClientThread implements Runnable {
 		return fileListingHtml;
 	}
 
+	/**
+	 * Print a formatted debug line to the console
+	 * @param message
+	 * @param sendType
+	 */
     protected void printLine(String message, Integer sendType) {
         String fm = "";
 
@@ -485,6 +561,10 @@ public class ClientThread implements Runnable {
         System.out.println(fm);
     }
 
+    /**
+     * Get the form the manage the server configuration
+     * @return
+     */
     protected String getManageForm(){
         String admin =  "<form method=\"post\" action=\"" +
                 ADMIN_URI +
@@ -518,6 +598,11 @@ public class ClientThread implements Runnable {
         return admin;
     }
 
+    /**
+     * Get content type for given file resource.
+     * @param file
+     * @return
+     */
     private String getContentType(FileResource file) {
         return URLConnection.guessContentTypeFromName(file.getName());
     }
