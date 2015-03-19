@@ -244,7 +244,7 @@ public class ClientThread implements Runnable {
 		
 		// Als we directories mogen listen
 		// en de opgevraagde resource is een map
-        if (directoryBrowsingAllowed && isDirectory(file)) {        	
+        if (directoryBrowsingAllowed && file.isDirectory()) {        	
         	String folderContent = listFolderContent(uri);
         	sendResponseHeader(200, folderContent.length());
         	
@@ -253,7 +253,7 @@ public class ClientThread implements Runnable {
         }
 
         // als het een file is
-		if (fileExists(file)) {	        
+        if (file.isFile()) {	        
             // Print Headers
             // TODO find better solution
             FileResource fr = new FileResource(fullPath);
@@ -524,30 +524,6 @@ public class ClientThread implements Runnable {
             e.printStackTrace();
         }
     }
-
-    /**
-     * Check if file exists and is not a directory
-     * @param file
-     * @return
-     */
-	private Boolean fileExists(File file) {
-		if (file.exists() && !file.isDirectory()) {
-			return true;
-		}
-		return false;
-	}
-	
-	/**
-	 * Check if directory exists
-	 * @param file
-	 * @return
-	 */
-	private Boolean isDirectory(File file) {
-		if (file.exists() && file.isDirectory()) {
-			return true;
-		}
-		return false;
-	}
 
 	/**
 	 * get the socket information formatted
