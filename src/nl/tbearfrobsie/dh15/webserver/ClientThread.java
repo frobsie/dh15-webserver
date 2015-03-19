@@ -127,7 +127,7 @@ public class ClientThread implements Runnable {
         String[] lineSplit = line.split(" ");
 
         // should have 3 indexes (method uri protocol)
-        if (lineSplit.length < 2) {
+        if (lineSplit.length < 3) {
         	plot400();
             return;
         }
