@@ -338,7 +338,7 @@ public class ClientThread implements Runnable {
      */
     private void sendResponseHeader(int statusCode, int contentLength){
         sendResponseHeader(statusCode, contentLength, "text/html");
-        lastSentStatusCode = statusCode;
+        
     }
 
     /**
@@ -376,6 +376,9 @@ public class ClientThread implements Runnable {
             sendLine("Content-Type: "+contentType);
             sendLine("Content-Length: "+contentLength);
             sendLine("");
+            
+            lastSentStatusCode = statusCode;
+            
         } catch (IOException e) {
             e.printStackTrace();
         }
