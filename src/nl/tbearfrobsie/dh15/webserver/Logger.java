@@ -16,11 +16,17 @@ public class Logger {
 	/** Access log file */
 	private static String LOG_FILE_ACCESS = "./log/access.log";
 	
+	/** Access log extended file */
+	private static String LOG_FILE_ACCESS_EXTENDED = "./log/access.extended.log";
+	
 	/** Log type SERVER */
 	public static final Integer LOG_TYPE_SERVER = 1;
 	
 	/** Log type ACCESS */
 	public static final Integer LOG_TYPE_ACCESS = 2;
+	
+	/** Log type ACCESS_EXTENDED */
+	public static final Integer LOG_TYPE_ACCESS_EXTENDED = 3;
 	
 	/** Date format for logging */
 	private static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -41,6 +47,9 @@ public class Logger {
 	            break;
 	        case 2:
 	            logFile = LOG_FILE_ACCESS;
+	            break;
+	        case 3:
+	            logFile = LOG_FILE_ACCESS_EXTENDED;
 	            break;
 	    }
 	    

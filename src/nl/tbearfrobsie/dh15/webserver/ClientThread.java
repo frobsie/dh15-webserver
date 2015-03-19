@@ -151,11 +151,27 @@ public class ClientThread implements Runnable {
         	plot400();
         }
         
-        Logger.append(Logger.LOG_TYPE_ACCESS, createLogLine(line));
+        Logger.append(Logger.LOG_TYPE_ACCESS, createAccessLogLine(line));
+        Logger.append(Logger.LOG_TYPE_ACCESS_EXTENDED, createAccessLogExtendedLine(lines));
     }
     
-    protected String createLogLine(String line) {
+    protected String createAccessLogLine(String line) {
     	String retVal = String.format("%s " + "\"" + line + "\"" + " %s", getSocketInfo(), lastSentStatusCode);
+    	return retVal;
+    }
+    
+    protected String createAccessLogExtendedLine(List<String> lines) {
+    	String retVal = ""; 
+    	
+    	Iterator<String> it = lines.iterator();
+    	while(it.hasNext()) {
+    		String line = it.next();
+    		retVal += line + System.lineSeparator();
+    	}
+    	
+    	retVal = String.format("%s %s " + "\"" + retVal + "\"", getSocketInfo(), lastSentStatusCode);
+    	retVal += System.lineSeparator();
+    
     	return retVal;
     }
 
