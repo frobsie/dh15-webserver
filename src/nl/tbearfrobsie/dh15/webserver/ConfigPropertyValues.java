@@ -25,6 +25,13 @@ public class ConfigPropertyValues {
     public static String CONFIG_KEY_CERT_STOREPASSWORD = "cert.storepassword";
     public static String CONFIG_KEY_CERT_KEYPASSWORD = "cert.keypassword";
     
+    public static String CONFIG_DATABASE_HOST = "database.host";
+    public static String CONFIG_DATABASE_NAME = "database.name";
+    public static String CONFIG_DATABASE_USERNAME = "database.user";
+    public static String CONFIG_DATABASE_PASSWORD = "database.passwd";
+    
+    public static String CONFIG_SALT = "salt";
+    
     public static String CONFIG_VALUE_STR_TRUE = "true";
     public static String CONFIG_VALUE_STR_FALSE = "false";
 

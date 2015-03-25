@@ -25,7 +25,7 @@ import java.util.List;
 import javax.net.ssl.SSLException;
 
 public class ClientThread implements Runnable {
-	
+
 	public static Integer bufferSize = 128;
 	public static String SERVER_OPENEDSOCKET = "Socket opened: ";
 	public static String SERVER_CLOSINGSOCKET = "Closing socket: ";
@@ -33,50 +33,60 @@ public class ClientThread implements Runnable {
 	public static String SERVER_STDOUT_SEND = "[SEND]   ";
 	public static String SERVER_STDOUT_RECV = "[RECV]   ";
 	public static String SERVER_STDOUT_ERROR = "[ERROR]  ";
-	
+
 	public static String DEFAULT_DATE_FORMAT = "MM-dd-yyyy HH:mm:ss";
 
 	public static String ERROR_CLIENT_CLOSED_CONNECTION = "Error : Client closed connection.";
 	public static String ERROR_CLIENT_FILENOTEXISTS = "File does not exist.";
 
-    public static String ADMIN_URI = "/adminerino";
-    public static String URI_SHOWLOG = "/showlog";
-    public static String URI_CLEARLOGS = "/clearlogs";
+	public static String ADMIN_URI = "/adminerino";
+	public static String URI_SHOWLOG = "/showlog";
+	public static String URI_CLEARLOGS = "/clearlogs";
+	public static String URI_LOGOUT = "/logout";
 
-    public static String EMPTY_STR = "";
-    
-    public static String EXCEPTION_SSL = "Location: https://127.0.0.1:8021";
-    
-    public static String MSG_PROTOCOL_GET = "GET";
-    public static String MSG_PROTOCOL_POST = "POST";
-    
-    public static String MSG_PROTOCOL_HEADER_HTTP = "HTTP/1.0 ";
-    public static String MSG_PROTOCOL_HEADER_CONTENTTYPE = "Content-Type: ";
-    public static String MSG_PROTOCOL_HEADER_CONTENTLENGTH = "Content-Length: ";
-    public static String MSG_PROTOCOL_HEADER_NOSNIFF = "X-Content-Type-Options: nosniff";
-    public static String MSG_PROTOCOL_HEADER_CLICKJACK = "X-Frame-Options: deny";
-    
-    public static String MSG_URI_ROOT = "/";
-    public static String MSG_URI_PARENTFOLDER = "../";
-    public static String MSG_PROTOCOL_DEFAULTMIMETYPE = "text/html";
+	public static String EMPTY_STR = "";
+
+	public static String EXCEPTION_SSL = "Location: https://127.0.0.1:8021";
+
+	public static String MSG_PROTOCOL_GET = "GET";
+	public static String MSG_PROTOCOL_POST = "POST";
+
+	public static String MSG_PROTOCOL_HEADER_HTTP = "HTTP/1.0 ";
+	public static String MSG_PROTOCOL_HEADER_CONTENTTYPE = "Content-Type: ";
+	public static String MSG_PROTOCOL_HEADER_CONTENTLENGTH = "Content-Length: ";
+	public static String MSG_PROTOCOL_HEADER_LOCATION = "Location: ";
+	public static String MSG_PROTOCOL_HEADER_NOSNIFF = "X-Content-Type-Options: nosniff";
+	public static String MSG_PROTOCOL_HEADER_CLICKJACK = "X-Frame-Options: deny";
+	public static String COOKIENAME = "UserCookieId";
+	public static String MSG_PROTOCOL_HEADER_COOKIE = "Set-Cookie: "+COOKIENAME+"=";
+	public static String MSG_PROTOCOL_REQUEST_HEADER_COOKIE = "Cookie: "+COOKIENAME+"=";
+
+
+	public static String MSG_URI_ROOT = "/";
+	public static String MSG_URI_PARENTFOLDER = "../";
+	public static String MSG_PROTOCOL_DEFAULTMIMETYPE = "text/html";
 	public static String MSG_SOCKINFO_DELIMITER_START = "[";
 	public static String MSG_SOCKINFO_DELIMITER_END = "] ";
 	public static String MSG_LOGS_CLEARED = "Logs cleared.";
-    
-    public static String URI_DELIMITER = "/";
-    public static String URI_SPLIT_DELIMITER = "&";
-    public static String URI_SPLIT_DELIMITER_VALUE = "=";
-    
-    public static String STATUSCODE_200_STR = "200 Ok";
-    public static String STATUSCODE_203_STR = "203 No Content";
-    public static String STATUSCODE_301_STR = "301 Moved Permanently";
-    public static String STATUSCODE_400_STR = "400 Bad Request";
-    public static String STATUSCODE_403_STR = "403 Forbidden";
-    public static String STATUSCODE_404_STR = "404 Not Found";
+
+	public static String URI_DELIMITER = "/";
+	public static String URI_SPLIT_DELIMITER = "&";
+	public static String URI_SPLIT_DELIMITER_VALUE = "=";
+
+	public static String STATUSCODE_200_STR = "200 Ok";
+	public static String STATUSCODE_203_STR = "203 No Content";
+	public static String STATUSCODE_301_STR = "301 Moved Permanently";
+	public static String STATUSCODE_307_STR = "307 Temporary Redirect";
+	public static String STATUSCODE_400_STR = "400 Bad Request";
+	public static String STATUSCODE_403_STR = "403 Forbidden";
+	public static String STATUSCODE_404_STR = "404 Not Found";
+
+	public static String POST_USERNAME = "username";
+	public static String POST_PASSWORD = "password";
 
 	/** The socket on which the client is connected */
 	private Socket socket;
-	
+
 	private InputStream inputStream;
 
 	/** Converts bytestream to characterstream */
@@ -88,11 +98,13 @@ public class ClientThread implements Runnable {
 	/** Writer for sending text to the client */
 	private PrintWriter printWriter;
 
-    public FileServer fileServer;
-    
-    private Boolean directoryBrowsingAllowed;
-    
-    private Integer lastSentStatusCode = -1;
+	public FileServer fileServer;
+
+	private Boolean directoryBrowsingAllowed;
+
+	private Integer lastSentStatusCode = -1;
+
+	private User user;
 
 	/**
 	 * Setup worker thread with given socket.
@@ -102,9 +114,11 @@ public class ClientThread implements Runnable {
 	 */
 	public ClientThread(Socket socket, FileServer fileServer) {
 		this.socket = socket;
-        this.fileServer = fileServer;
-        
-        directoryBrowsingAllowed = Boolean.valueOf(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING));
+		this.fileServer = fileServer;
+
+		directoryBrowsingAllowed = Boolean.valueOf(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING));
+
+		user = new User();
 	}
 
 	/**
@@ -121,17 +135,17 @@ public class ClientThread implements Runnable {
 			bufferedReader = new BufferedReader(inputStreamReader);
 			printWriter = new PrintWriter(socket.getOutputStream(), true);
 
-            ArrayList<String> lines = readTillEmptyLine();
-            
-            // only process when there are lines
-            if(lines.size() > 0) {
-                //read first line
-                readRequestMethod(lines);
-            }
+			ArrayList<String> lines = readTillEmptyLine();
+
+			// only process when there are lines
+			if(lines.size() > 0) {
+				//read first line
+				readRequestMethod(lines);
+			}
 
 			printLine(SERVER_CLOSINGSOCKET + getSocketInfo(), 0);
 
-            // close when there is no more input
+			// close when there is no more input
 			inputStreamReader.close();
 			bufferedReader.close();
 			socket.close();
@@ -139,81 +153,83 @@ public class ClientThread implements Runnable {
 		} catch (SocketException e) {
 			printLine(ERROR_CLIENT_CLOSED_CONNECTION, 3);
 		} catch(SSLException e) {
-            //TODO fix isn't working at all
-            sendResponseHeader(301, 0);
-            try {
-                sendLine(EXCEPTION_SSL);
-            } catch(IOException ex) {
-                ex.printStackTrace();
-            }
-            return;
+			//TODO fix isn't working at all
+			sendResponseHeader(301, 0);
+			try {
+				sendLine(EXCEPTION_SSL);
+			} catch(IOException ex) {
+				ex.printStackTrace();
+			}
+			return;
 		} catch (Exception e) {
 			// TODO
 			e.printStackTrace();
 		}
 	}
 
-    /**
-     * Handles user input
-     *
-     * @param lines
-     * @throws IOException
-     */
-    protected void readRequestMethod(ArrayList<String> lines) throws IOException, Exception {
-        String line = lines.get(0);
-        printLine(line, 2);
-        
-        // split the input string by whitespace
-        String[] lineSplit = line.split(" ");
+	/**
+	 * Handles user input
+	 *
+	 * @param lines
+	 * @throws IOException
+	 */
+	protected void readRequestMethod(ArrayList<String> lines) throws IOException, Exception {
+		String line = lines.get(0);
+		printLine(line, 2);
 
-        // should have 3 indexes (method uri protocol)
-        if (lineSplit.length < 3) {
-        	plot400();
-            return;
-        }
+		// split the input string by whitespace
+		String[] lineSplit = line.split(" ");
 
-        String method = lineSplit[0];
-        String uri = lineSplit[1];
-        String protocol = lineSplit[2];
-        if(method.equals(MSG_PROTOCOL_GET)) {
-            handleGet(uri, protocol);
-        } else if (method.equals(MSG_PROTOCOL_POST)) {
-            Integer contentLength = 0;
-            final String contentHeader = MSG_PROTOCOL_HEADER_CONTENTLENGTH;
-            for(int i = 0; i < lines.size(); i++) {
-            	if (lines.get(i).startsWith(contentHeader)) {
-                    contentLength = Integer.parseInt(lines.get(i).substring(contentHeader.length()));
-                }	
-            }            
-            handlePost(uri, protocol, contentLength);
-        } else {
-        	// All other methods return 400 
-        	plot400();
-        }
-        
-        Logger.append(Logger.LOG_TYPE_ACCESS, createAccessLogLine(line));
-        Logger.append(Logger.LOG_TYPE_ACCESS_EXTENDED, createAccessLogExtendedLine(lines));
-    }
-    
-    protected String createAccessLogLine(String line) {
-    	String retVal = String.format("%s " + "\"" + line + "\"" + " %s", getSocketInfo(), lastSentStatusCode);
-    	return retVal;
-    }
-    
-    protected String createAccessLogExtendedLine(List<String> lines) {
-    	String retVal = EMPTY_STR; 
-    	
-    	Iterator<String> it = lines.iterator();
-    	while(it.hasNext()) {
-    		String line = it.next();
-    		retVal += line + System.lineSeparator();
-    	}
-    	
-    	retVal = String.format("%s %s " + "\"" + retVal + "\"", getSocketInfo(), lastSentStatusCode);
-    	retVal += System.lineSeparator();
-    
-    	return retVal;
-    }
+		// should have 3 indexes (method uri protocol)
+		if (lineSplit.length < 3) {
+			plot400();
+			return;
+		}
+
+		String method = lineSplit[0];
+		String uri = lineSplit[1];
+		String protocol = lineSplit[2];
+
+		tryUserLogin(lines);
+
+		if(method.equals(MSG_PROTOCOL_GET)) {
+			handleGet(uri, protocol);
+		} else if (method.equals(MSG_PROTOCOL_POST)) {
+			Integer contentLength = 0;
+			for(int i = 0; i < lines.size(); i++) {
+				if (lines.get(i).startsWith(MSG_PROTOCOL_HEADER_CONTENTLENGTH)) {
+					contentLength = Integer.parseInt(lines.get(i).substring(MSG_PROTOCOL_HEADER_CONTENTLENGTH.length()));
+				}	
+			}            
+			handlePost(uri, protocol, contentLength);
+		} else {
+			// All other methods return 400 
+			plot400();
+		}
+
+		Logger.append(Logger.LOG_TYPE_ACCESS, createAccessLogLine(line));
+		Logger.append(Logger.LOG_TYPE_ACCESS_EXTENDED, createAccessLogExtendedLine(lines));
+	}
+
+	protected String createAccessLogLine(String line) {
+		String retVal = String.format("%s " + "\"" + line + "\"" + " %s", getSocketInfo(), lastSentStatusCode);
+		return retVal;
+	}
+
+	protected String createAccessLogExtendedLine(List<String> lines) {
+		String retVal = EMPTY_STR; 
+
+		Iterator<String> it = lines.iterator();
+		while(it.hasNext()) {
+			String line = it.next();
+			retVal += line + System.lineSeparator();
+		}
+
+		retVal = String.format("%s %s " + "\"" + retVal + "\"", getSocketInfo(), lastSentStatusCode);
+		retVal += System.lineSeparator();
+
+		return retVal;
+	}
 
 	/**
 	 * Temporary GET handler
@@ -223,79 +239,100 @@ public class ClientThread implements Runnable {
 	 * @throws IOException
 	 */
 	private void handleGet(String uri, String protocol) throws IOException {		
-        // if ask for root get default page (TODO accept multiple defaults)
-        if(uri.equals(MSG_URI_ROOT) && !directoryBrowsingAllowed) {
-            uri = getDefaultpageUri();
-        }
-
-        String fullPath = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + uri;
-       
-        // check if fullpath contains ../ (can cause directory scanning issues)
-        if(fullPath.contains(MSG_URI_PARENTFOLDER)) {
-        	plot403();
-        	return;
-        }
-
-        printLine(fullPath, 0);
-		File file = new File(fullPath);
-		
-		printLine(fullPath, 3);
-		printLine(uri, 1);
-		
-		// Als we directories mogen listen
-		// en de opgevraagde resource is een map
-        if (directoryBrowsingAllowed && file.isDirectory()) {        	
-        	String folderContent = listFolderContent(uri);
-        	sendResponseHeader(200, folderContent.length());
-        	
-            sendLine(folderContent);
-        	return;
-        }
-
-        // als het een file is
-        if (file.isFile()) {	        
-            // Print Headers
-            // TODO find better solution
-            FileResource fr = new FileResource(fullPath);
-            sendResponseHeader(200, fr.getByteSize(), getContentType(fr));
-
-			sendFile(fr);
-            return;
+		// if ask for root get default page (TODO accept multiple defaults)
+		if(uri.equals(MSG_URI_ROOT) && !directoryBrowsingAllowed) {
+			uri = getDefaultpageUri();
 		}
 
-        printLine(uri, 1);
+		String fullPath = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + uri;
 
-        // TODO
-        // Dit moet anders 
-        if(uri.equals(ADMIN_URI)) {
-            String form = getManageForm();
-            sendResponseHeader(200, form.length());
+		// check if fullpath contains ../ (can cause directory scanning issues)
+		if(fullPath.contains(MSG_URI_PARENTFOLDER)) {
+			plot403();
+			return;
+		}
 
-            sendLine(form);
-            return;
-        }
-        
-        if(uri.equals(URI_SHOWLOG)) {
-        	String log = getLog();
-        	sendResponseHeader(200, log.length());
-        	sendLine(log);
-            return;
-        }
-        
-        if(uri.equals(URI_CLEARLOGS)) {
-        	String cleared = MSG_LOGS_CLEARED;
-        	clearLogFiles();
-        	sendResponseHeader(200, cleared.length());
-        	sendLine(cleared);
-            return;
-        }
+		printLine(fullPath, 0);
+		File file = new File(fullPath);
+
+		printLine(fullPath, 3);
+		printLine(uri, 1);
+
+		// Als we directories mogen listen
+		// en de opgevraagde resource is een map
+		if (directoryBrowsingAllowed && file.isDirectory()) {        	
+			String folderContent = listFolderContent(uri);
+			sendResponseHeader(200, folderContent.length());
+
+			sendLine(folderContent);
+			return;
+		}
+
+		// als het een file is
+		if (file.isFile()) {	        
+			// Print Headers
+			// TODO find better solution
+			FileResource fr = new FileResource(fullPath);
+			sendResponseHeader(200, fr.getByteSize(), getContentType(fr));
+
+			sendFile(fr);
+			return;
+		}
+
+		printLine(uri, 1);
+
+		// TODO
+		// Dit moet anders 
+		if(uri.equals(ADMIN_URI)) {
+			String form = getManageForm();
+			sendResponseHeader(200, form.length());
+
+			sendLine(form);
+			return;
+		}
+
+		if(uri.equals(URI_LOGOUT)) {
+			System.out.println("logout");
+			user.destroyCookieId();
+			
+			MySQLAccess msa = new MySQLAccess();
+			msa.storeUser(user);
+			msa.close();
+			user = new User();
+			
+			redirectUrl(ADMIN_URI);
+			return;
+		}
+
+		if(uri.equals(URI_SHOWLOG)) {
+			if(!user.isLoggedIn()) {
+				plot403();
+				return;
+			}
+			String log = getLog();
+			sendResponseHeader(200, log.length());
+			sendLine(log);
+			return;
+		}
+
+		if(uri.equals(URI_CLEARLOGS)) {
+			if(!user.isLoggedIn() || !user.hasRole(User.ROLE_BEHEERDERS)) {
+				plot403();
+				return;
+			}
+			String cleared = MSG_LOGS_CLEARED;
+			clearLogFiles();
+			sendResponseHeader(200, cleared.length());
+			sendLine(cleared);
+			return;
+		}
 
 		// Als de opgevraagde resource niet bestaat
 		// dan 404 tonen
 		plot404();
-        printLine(ERROR_CLIENT_FILENOTEXISTS, 3);
+		printLine(ERROR_CLIENT_FILENOTEXISTS, 3);
 	}
-	
+
 	// TODO
 	// memory management + styling
 	/**
@@ -319,17 +356,17 @@ public class ClientThread implements Runnable {
 		}
 
 		br.close();
-		
+
 		retVal += "</tbody>"
 				+ "</table>";
-		
+
 		return retVal;
 	}
-	
+
 	protected void clearLogFiles() throws FileNotFoundException {
 		PrintWriter a = new PrintWriter(Logger.LOG_FILE_ACCESS);
 		PrintWriter ax = new PrintWriter(Logger.LOG_FILE_ACCESS_EXTENDED);
-		
+
 		a.print(EMPTY_STR);
 		ax.print(EMPTY_STR);
 
@@ -341,53 +378,53 @@ public class ClientThread implements Runnable {
 	 * Collect the default page from the config and check if one of the options exists.
 	 * @return String 
 	 */
-    protected String getDefaultpageUri() {
-        String[] lineSplit = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE).split(";");
-        for(int i = 0; i < lineSplit.length; i++) {
-            File file = new File(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + URI_DELIMITER + lineSplit[i]);
-            if(file.exists()) {
-                return URI_DELIMITER + lineSplit[i];
-            }
-        }
-        return URI_DELIMITER + lineSplit[0];
-    }
-	
-    /**
-     * send 404 page to the user.
-     * @throws IOException
-     */
+	protected String getDefaultpageUri() {
+		String[] lineSplit = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE).split(";");
+		for(int i = 0; i < lineSplit.length; i++) {
+			File file = new File(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + URI_DELIMITER + lineSplit[i]);
+			if(file.exists()) {
+				return URI_DELIMITER + lineSplit[i];
+			}
+		}
+		return URI_DELIMITER + lineSplit[0];
+	}
+
+	/**
+	 * send 404 page to the user.
+	 * @throws IOException
+	 */
 	protected void plot404() throws IOException {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_ERRORPAGE);
 
-        FileResource errorFile = new FileResource(fullPath);
-        sendResponseHeader(404, errorFile.getByteSize(), getContentType(errorFile));
+		FileResource errorFile = new FileResource(fullPath);
+		sendResponseHeader(404, errorFile.getByteSize(), getContentType(errorFile));
 		sendFile(errorFile);
 	}
-	
+
 	/**
-     * send 403 page to the user.
-     * @throws IOException
-     */
+	 * send 403 page to the user.
+	 * @throws IOException
+	 */
 	protected void plot403() throws IOException {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_FORBIDDENPAGE);
 
-        FileResource errorFile = new FileResource(fullPath);
-        sendResponseHeader(403, errorFile.getByteSize(), getContentType(errorFile));
+		FileResource errorFile = new FileResource(fullPath);
+		sendResponseHeader(403, errorFile.getByteSize(), getContentType(errorFile));
 		sendFile(errorFile);
 	}
-	
+
 	/**
-     * send 400 page to the user.
-     * @throws IOException
-     */
+	 * send 400 page to the user.
+	 * @throws IOException
+	 */
 	protected void plot400() throws IOException {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_BADREQUESTPAGE);
 
-        FileResource errorFile = new FileResource(fullPath);
-        sendResponseHeader(400, errorFile.getByteSize(), getContentType(errorFile));
+		FileResource errorFile = new FileResource(fullPath);
+		sendResponseHeader(400, errorFile.getByteSize(), getContentType(errorFile));
 		sendFile(errorFile);
 	}
-	
+
 	/**
 	 * Handle POST requests 
 	 * @param uri
@@ -397,54 +434,82 @@ public class ClientThread implements Runnable {
 	 * @throws Exception
 	 */
 	protected void handlePost(String uri, String protocol, int contentLength) throws IOException, Exception {
-        printLine(uri,2);
+		printLine(uri,2);
 
-        HashMap<String, String> post = new HashMap<String, String>();
-        if(contentLength > 0) {
-            char[] data = new char[contentLength];
-            bufferedReader.read(data);
-            String[] rawPost = (new String(data)).split(URI_SPLIT_DELIMITER);
-            for(int i = 0; i < rawPost.length; i++) {
-                String[] split = rawPost[i].split(URI_SPLIT_DELIMITER_VALUE);
-                String value = null;
-                // no value given
-                if(split.length == 2) {
-                    value = split[1];
-                }
-                post.put(split[0], value);
-            }
-        }
+		HashMap<String, String> post = new HashMap<String, String>();
+		if(contentLength > 0) {
+			char[] data = new char[contentLength];
+			bufferedReader.read(data);
+			String[] rawPost = (new String(data)).split(URI_SPLIT_DELIMITER);
+			for(int i = 0; i < rawPost.length; i++) {
+				String[] split = rawPost[i].split(URI_SPLIT_DELIMITER_VALUE);
+				String value = null;
+				// no value given
+				if(split.length == 2) {
+					value = split[1];
+				}
+				post.put(split[0], value);
+			}
+		}
 
-        if(uri.equals(ADMIN_URI)) {
-            printLine(post.toString(),2);
-            // UGLY :D
-            // - joh echt?
-            if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_PORT)) {
-                ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_PORT, new Integer(post.get(ConfigPropertyValues.CONFIG_KEY_PORT)).toString());
-            }
-            if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_DOCROOT)) {
-                ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DOCROOT, post.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT));
-            }
-            if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE)) {
-                ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE, post.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE));
-            }
-            if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING)) {
-                ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING, ConfigPropertyValues.CONFIG_VALUE_STR_TRUE);
-            } else {
-                ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING, ConfigPropertyValues.CONFIG_VALUE_STR_FALSE);
-            }
-            ConfigPropertyValues.write();
-            sendResponseHeader(203, 0);
+		if(uri.equals(ADMIN_URI)) {
+			if(user.isLoggedIn()) { 	
+				if(!user.hasRole(User.ROLE_BEHEERDERS)) {
+					plot403();
+					return;
+				}
+				printLine(post.toString(),2);
+				// UGLY :D
+				// - joh echt?
+				if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_PORT)) {
+					ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_PORT, new Integer(post.get(ConfigPropertyValues.CONFIG_KEY_PORT)).toString());
+				}
+				if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_DOCROOT)) {
+					ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DOCROOT, post.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT));
+				}
+				if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE)) {
+					ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE, post.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE));
+				}
+				if(post.containsKey(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING)) {
+					ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING, ConfigPropertyValues.CONFIG_VALUE_STR_TRUE);
+				} else {
+					ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING, ConfigPropertyValues.CONFIG_VALUE_STR_FALSE);
+				}
+				ConfigPropertyValues.write();
+				sendResponseHeader(203, 0);
 
-            //Close socket so a new one will start on another port
-            try {
-                socket.close();
-                fileServer.closeServer();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return;
-        }
+				//Close socket so a new one will start on another port
+				try {
+					socket.close();
+					fileServer.closeServer();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return;
+			} else {
+				if(post.containsKey(POST_USERNAME) && post.containsKey(POST_PASSWORD)) {
+					MySQLAccess msa = new MySQLAccess();
+					User user = msa.readUser(post.get(POST_USERNAME));
+					if(null == user) {
+						System.out.println("No user");
+						plot403();
+						return;
+					} 
+
+					if(!user.checkPassword(post.get(POST_PASSWORD))) {
+						plot403();
+						return;
+					}
+					user.setLoggedIn(true);
+					user.generateCookieId();
+
+					msa.storeUser(user);
+					this.user = user;
+					handleGet(ADMIN_URI, "HTTP1.0");
+					msa.close();
+				}
+			}
+		}
 
 	}
 
@@ -454,76 +519,90 @@ public class ClientThread implements Runnable {
 	 * @return
 	 * @throws IOException
 	 */
-    private ArrayList<String> readTillEmptyLine() throws IOException {
-        ArrayList<String> lines = new ArrayList<String>();
-        String line = bufferedReader.readLine();
+	private ArrayList<String> readTillEmptyLine() throws IOException {
+		ArrayList<String> lines = new ArrayList<String>();
+		String line = bufferedReader.readLine();
 
-        // first read all header lines
-        while (line != null && line.length() > 0) {
-            lines.add(line);
-            line = bufferedReader.readLine();
-        }
-        return lines;
-    }
+		// first read all header lines
+		while (line != null && line.length() > 0) {
+			lines.add(line);
+			line = bufferedReader.readLine();
+		}
+		return lines;
+	}
 
-    /**
-     * send response headers to the client
-     * @param statusCode
-     * @param contentLength
-     */
-    private void sendResponseHeader(int statusCode, int contentLength){
-        sendResponseHeader(statusCode, contentLength, MSG_PROTOCOL_DEFAULTMIMETYPE);
-        
-    }
+	/**
+	 * send response headers to the client
+	 * @param statusCode
+	 * @param contentLength
+	 */
+	private void sendResponseHeader(int statusCode, int contentLength){
+		sendResponseHeader(statusCode, contentLength, MSG_PROTOCOL_DEFAULTMIMETYPE);
 
-    /**
-     * send response headers to the client
-     * @param statusCode
-     * @param contentLength
-     * @param contentType
-     */
-    private void sendResponseHeader(int statusCode, int contentLength, String contentType) {
-        String status = null;
+	}
 
-        switch(statusCode) {
-            case 200:
-                status = STATUSCODE_200_STR;
-                break;
-            case 203:
-                status = STATUSCODE_203_STR;
-                break;
-            case 301:
-                status = STATUSCODE_301_STR;
-                break;
-            case 400:
-            	status = STATUSCODE_400_STR;
-            	break;
-            case 403:
-                status = STATUSCODE_403_STR;
-                break;    
-            case 404:
-                status = STATUSCODE_404_STR;
-                break;
-        }
-        try {
-            sendLine(MSG_PROTOCOL_HEADER_HTTP + status);
-            sendLine(MSG_PROTOCOL_HEADER_CONTENTTYPE + contentType);
-            sendLine(MSG_PROTOCOL_HEADER_CONTENTLENGTH + contentLength);
-            
-            // Om "MIME-Sniffing" te voorkomen
-            sendLine(MSG_PROTOCOL_HEADER_NOSNIFF);
-            
-            // Om "Clickjacking" te voorkomen
-            sendLine(MSG_PROTOCOL_HEADER_CLICKJACK);
-            
-            sendLine(EMPTY_STR);
-            
-            lastSentStatusCode = statusCode;
-            
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+	/**
+	 * send response headers to the client
+	 * @param statusCode
+	 * @param contentLength
+	 * @param contentType
+	 */
+	private void sendResponseHeader(int statusCode, int contentLength, String contentType) {
+		String status = null;
+
+		switch(statusCode) {
+		case 200:
+			status = STATUSCODE_200_STR;
+			break;
+		case 203:
+			status = STATUSCODE_203_STR;
+			break;
+		case 301:
+			status = STATUSCODE_301_STR;
+			break;
+		case 400:
+			status = STATUSCODE_400_STR;
+			break;
+		case 403:
+			status = STATUSCODE_403_STR;
+			break;    
+		case 404:
+			status = STATUSCODE_404_STR;
+			break;
+		}
+		try {
+			sendLine(MSG_PROTOCOL_HEADER_HTTP + status);
+			if(user.isLoggedIn()) {
+				sendLine(MSG_PROTOCOL_HEADER_COOKIE + user.getCookieId());
+			}
+			sendLine(MSG_PROTOCOL_HEADER_CONTENTTYPE + contentType);
+			sendLine(MSG_PROTOCOL_HEADER_CONTENTLENGTH + contentLength);
+
+			// Om "MIME-Sniffing" te voorkomen
+			sendLine(MSG_PROTOCOL_HEADER_NOSNIFF);
+
+			// Om "Clickjacking" te voorkomen
+			sendLine(MSG_PROTOCOL_HEADER_CLICKJACK);
+
+			sendLine(EMPTY_STR);
+
+			lastSentStatusCode = statusCode;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void redirectUrl(String uri) {
+		try {
+			sendLine(MSG_PROTOCOL_HEADER_HTTP + STATUSCODE_307_STR);
+			sendLine(MSG_PROTOCOL_HEADER_LOCATION + uri);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
 
 	/**
 	 * get the socket information formatted
@@ -594,7 +673,7 @@ public class ClientThread implements Runnable {
 		File f = new File(path);
 		List<File> list = Arrays.asList(f.listFiles());
 		Iterator<File> fileIterator = list.iterator();
-		
+
 		String fileListingHtml = "<h1>Index of " + uri + "</h1>";
 		fileListingHtml += "<table>";
 		fileListingHtml += "<thead style=\"text-align:left;\">";
@@ -605,54 +684,54 @@ public class ClientThread implements Runnable {
 		fileListingHtml += "</tr>";
 		fileListingHtml += "</thead>";
 		fileListingHtml += "<tbody>";
-		
+
 		if (!uri.equals(URI_DELIMITER)) {
 			// Parent uri opbouwen
 			ArrayList<String> uriParts = new ArrayList<String>(Arrays.asList(uri.split(URI_DELIMITER)));
-			
+
 			if ((uriParts.size() -1) > 0) {
 				uriParts.remove(uriParts.size()-1);
 			}
-			
+
 			Iterator<String> uriIterator = uriParts.iterator();
 			String newUri = URI_DELIMITER;
-			
+
 			while(uriIterator.hasNext()) {
 				String uriPart = uriIterator.next();
-				
+
 				if (!uriPart.equals(EMPTY_STR)) {
 					newUri += uriPart + URI_DELIMITER;	
 				}
 			}			
-					
+
 			fileListingHtml += "<tr>";
 			fileListingHtml += "<td style=\"padding:10px\" colspan=\"3\"><a href=\""+newUri+"\">Parent Directory</a></td>";
 			fileListingHtml += "</tr>";
 		}
-		
+
 		// Date formatter voor de lastmodified date van de file
 		SimpleDateFormat sdf = new SimpleDateFormat(DEFAULT_DATE_FORMAT);
-		
+
 		while(fileIterator.hasNext()) {
 			File file = fileIterator.next();
 			String filePath = uri;
-			
+
 			if (uri.equals(URI_DELIMITER)) {
 				filePath = uri + file.getName();
 			} else {
 				filePath = uri + URI_DELIMITER +file.getName();
 			}
-			
+
 			fileListingHtml += "<tr>";
 			fileListingHtml += "<td style=\"padding:10px\"><a href=\""+ filePath +"\">"+file.getName()+"</a></td>";
 			fileListingHtml += "<td style=\"padding:10px\">"+sdf.format(file.lastModified())+"</td>";
 			fileListingHtml += "<td style=\"padding:10px\">"+file.length()+"</td>";
 			fileListingHtml += "</tr>";
 		}
-		
+
 		fileListingHtml += "</tbody>";
 		fileListingHtml += "</table>";
-		
+
 		return fileListingHtml;
 	}
 
@@ -661,76 +740,143 @@ public class ClientThread implements Runnable {
 	 * @param message
 	 * @param sendType
 	 */
-    protected void printLine(String message, Integer sendType) {
-        String fm = EMPTY_STR;
+	protected void printLine(String message, Integer sendType) {
+		String fm = EMPTY_STR;
 
-        switch (sendType) {
-            default:
-            case 0:
-                fm += SERVER_STDOUT_SERVER;
-                break;
-            case 1:
-                fm += SERVER_STDOUT_SEND;
-                break;
-            case 2:
-                fm += SERVER_STDOUT_RECV;
-                break;
-            case 3:
-                fm += SERVER_STDOUT_ERROR;
-                break;
-        }
+		switch (sendType) {
+		default:
+		case 0:
+			fm += SERVER_STDOUT_SERVER;
+			break;
+		case 1:
+			fm += SERVER_STDOUT_SEND;
+			break;
+		case 2:
+			fm += SERVER_STDOUT_RECV;
+			break;
+		case 3:
+			fm += SERVER_STDOUT_ERROR;
+			break;
+		}
 
-        fm += MSG_SOCKINFO_DELIMITER_START + getSocketInfo() + MSG_SOCKINFO_DELIMITER_END;
-        fm += message;
+		fm += MSG_SOCKINFO_DELIMITER_START + getSocketInfo() + MSG_SOCKINFO_DELIMITER_END;
+		fm += message;
 
-        System.out.println(fm);
-    }
+		System.out.println(fm);
+	}
 
-    /**
-     * Get the form the manage the server configuration
-     * @return
-     */
-    protected String getManageForm(){
-        String admin =  "<form method=\"post\" action=\"" +
-                ADMIN_URI +
-                "\">\n" +
-                "<table>\n" +
-                "<thead>\n" +
-                "    <tr><th>SuperServer</th><th class=\"right\">Control Panel</th></tr>\n" +
-                "</thead>\n" +
-                "<tbody>\n" +
-                "    <tr><td>Web port:</td><td><input name=\"port\" value=\"" +
-                ""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT)+"" +
-                "\" type=\"text\"></td></tr>\n" +
-                "    <tr><td>Webroot:</td><td><input name=\"docroot\" value=\"" +
-                ""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT)+"" +
-                "\" type=\"text\"></td></tr>\n" +
-                "    <tr><td>Default page:</td><td><input name=\"defaultpage\" value=\"" +
-                ""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE)+"" +
-                "\" type=\"text\"></td></tr>\n" +
-                "    <tr><td>Directory browsing</td><td><input name=\"directorybrowsing\" type=\"checkbox\"";
-                if(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING).equals(ConfigPropertyValues.CONFIG_VALUE_STR_TRUE)) {
-                    admin += " checked=\"checked\"";
-                }
+	/**
+	 * Get the form the manage the server configuration
+	 * @return
+	 */
+	protected String getManageForm(){
+		String admin = "";
+		if(user.isLoggedIn()) {
+			admin +=  "<form method=\"post\" action=\"" +
+					ADMIN_URI +
+					"\">\n" +
+					"<table>\n" +
+					"<thead>\n" +
+					"    <tr><th>SuperServer</th><th class=\"right\">Control Panel</th></tr>\n" +
+					"</thead>\n" +
+					"<tbody>\n" +
+					"    <tr><td>Web port:</td><td><input name=\"port\" value=\"" +
+					""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT)+"" +
+					"\" ";
+			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
+				admin += "disabled=\"disabled\"";
+			}
+			admin += "type=\"text\"></td></tr>\n" +
+					"    <tr><td>Webroot:</td><td><input name=\"docroot\" value=\"" +
+					""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT)+"" +
+					"\" ";
+			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
+				admin += "disabled=\"disabled\"";
+			}
+			admin += "type=\"text\"></td></tr>\n" +
+					"    <tr><td>Default page:</td><td><input name=\"defaultpage\" value=\"" +
+					""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE)+"" +
+					"\" ";
+			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
+				admin += "disabled=\"disabled\"";
+			}
+			admin += "type=\"text\"></td></tr>\n" +
+					"    <tr><td>Directory browsing</td><td><input name=\"directorybrowsing\" type=\"checkbox\"";
+			if(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING).equals(ConfigPropertyValues.CONFIG_VALUE_STR_TRUE)) {
+				admin += " checked=\"checked\"";
+			}
 
-                admin += "></td></tr>\n" +
-                "    <tr><td><a href=\"" + URI_SHOWLOG + "\">Show log</a></td>\n" +
-                "        <td class=\"right\"><input value=\"OK\" type=\"submit\"></td>\n" +
-                "    </tr>\n" +
-                "    <tr><td><a href=\"" + URI_CLEARLOGS + "\">Clear logs</a></td>\n" +
-                "    </tr>\n" +
-                "</tbody>\n" +
-                "</table>\n" +
-                "</form>";
-        return admin;
-    }
+			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
+				admin += "disabled=\"disabled\"";
+			}
 
-    /**
-     * Get content type for given file resource.
-     * @param file
-     * @return
-     */
-    private String getContentType(FileResource file) {
-        return URLConnection.guessContentTypeFromName(file.getName());
-    }
+			admin += "></td></tr>\n" +
+					"    <tr><td><a href=\"" + URI_SHOWLOG + "\">Show log</a></td>\n" +
+					"        <td class=\"right\"><input value=\"OK\"";
+			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
+				admin += "disabled=\"disabled\"";
+			}
+			admin += " type=\"submit\"></td>\n" +
+					"    </tr>\n";
+			if(user.hasRole(User.ROLE_BEHEERDERS)) {		
+				admin += "    <tr><td><a href=\"" + URI_CLEARLOGS + "\">Clear logs</a></td></tr>\n";
+			}
+			admin += "    <tr><td><a href=\"" + URI_LOGOUT + "\">Logout</a></td></tr>\n";
+			admin += " </tbody>\n" +
+					"</table>\n" +
+					"</form>";
+		} else {
+			admin += "<form method=\"post\" action=\"" +
+					ADMIN_URI +
+					"\">\n" +
+					"<table>\n" +
+					"<thead>\n" +
+					"    <tr><th>Login</th><th class=\"right\"></th></tr>\n" +
+					"</thead>\n" +
+					"<tbody>\n" +
+					"    <tr><td>Username:</td><td><input name=\"username\" value=\"\" type=\"text\"></td></tr>\n" +
+					"    <tr><td>Password:</td><td><input name=\"password\" value=\"\" type=\"password\"></td></tr>\n" +
+					"    <tr><td></td>\n" +
+					"        <td class=\"right\"><input value=\"OK\" type=\"submit\"></td>\n" +
+					"    </tr>\n" +
+					"</tbody>\n" +
+					"</table>\n" +
+					"</form>";
+		}
+		return admin;
+	}
+
+	/**
+	 * Get content type for given file resource.
+	 * @param file
+	 * @return
+	 */
+	private String getContentType(FileResource file) {
+		return URLConnection.guessContentTypeFromName(file.getName());
+	}
+
+	private void tryUserLogin(ArrayList<String> lines) {
+		String cookie = "";
+		for(int i = 0; i < lines.size(); i++) {
+			if (lines.get(i).startsWith(MSG_PROTOCOL_REQUEST_HEADER_COOKIE)) {
+				cookie = lines.get(i).substring(MSG_PROTOCOL_REQUEST_HEADER_COOKIE.length());
+			}	
+		}            
+
+		if(cookie.equals("")) {
+			return;
+		}
+
+		MySQLAccess msa = new MySQLAccess();
+		User user = msa.readUserByCookie(cookie);
+		if(null == user) {
+			return;
+		} 
+		user.setLoggedIn(true);
+		user.generateCookieId();
+
+		msa.storeUser(user);
+		this.user = user;
+		msa.close();
+	}
 }

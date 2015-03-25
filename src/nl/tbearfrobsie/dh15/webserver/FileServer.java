@@ -108,7 +108,7 @@ public class FileServer {
 	 * @param args
 	 */
 	public static void main(String[] args)
-	{
+	{		
 		// init config
 		try {
 			ConfigPropertyValues.load();
@@ -116,6 +116,7 @@ public class FileServer {
 			System.out.println(SERVER_ERROR_COULDNOTREADCONFIG);
 			System.exit(0);
 		}
+		
 		// init file server
 		FileServer fileServer = new FileServer();
 
