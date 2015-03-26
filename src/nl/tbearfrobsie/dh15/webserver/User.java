@@ -21,12 +21,32 @@ public class User {
 	
 	private SecureRandom random = new SecureRandom();
 	
+	/**
+	 * Existing user constructor
+	 * @param id
+	 * @param username
+	 * @param password
+	 * @param role
+	 * @param cookieId
+	 */
 	public User(int id, String username, String password, String role, String cookieId) {
 		this.id = id;
 		this.username = username;
 		this.password = password;
 		this.role = role;
 		this.cookieId = cookieId;
+	}
+	
+	/**
+	 * New User constructor 
+	 * @param username
+	 * @param password
+	 * @param role
+	 */
+	public User(String username, String password, String role) {
+		this.username = username;
+		setPassword(password);
+		this.role = role;
 	}
 	
 	public User() {
@@ -62,12 +82,15 @@ public class User {
 	}
 	
 	public boolean checkPassword(String passwordToCheck) {
-		String saltstring = this.username+passwordToCheck+ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_SALT);
-		String passwd = hash256(saltstring);
+		String passwd = cryptPassword(passwordToCheck);
 		if(password.equals(passwd)) {
 			return true;
 		}
 		return false;
+	}
+	
+	private void setPassword(String password) {
+		this.password = cryptPassword(password);
 	}
 	
 	public boolean isLoggedIn() {
@@ -90,8 +113,14 @@ public class User {
 		this.cookieId = null;
 	}
 	
+	private String cryptPassword(String password) {
+		String saltstring = this.username+password+ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_SALT);
+		return hash256(saltstring);
+	}
+	
 	private String hash256(String passwdString)
 	{
+		
 		MessageDigest md;
 		try {
 			md = MessageDigest.getInstance("SHA-256");

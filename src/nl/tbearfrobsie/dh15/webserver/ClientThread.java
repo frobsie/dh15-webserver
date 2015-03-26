@@ -15,18 +15,14 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URLConnection;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.net.ssl.SSLException;
-
 public class ClientThread implements Runnable {
 
-	public static Integer bufferSize = 128;
+	public static Integer BUFFERSIZE = 128;
 	public static String SERVER_OPENEDSOCKET = "Socket opened: ";
 	public static String SERVER_CLOSINGSOCKET = "Closing socket: ";
 	public static String SERVER_STDOUT_SERVER = "[SERVER] ";
@@ -43,10 +39,11 @@ public class ClientThread implements Runnable {
 	public static String URI_SHOWLOG = "/showlog";
 	public static String URI_CLEARLOGS = "/clearlogs";
 	public static String URI_LOGOUT = "/logout";
+	public static String URI_USERS = "/users";
+	public static String URI_USER_NEW = "/users/new";
+	public static String URI_USER_DELETE = "/users/delete/";
 
 	public static String EMPTY_STR = "";
-
-	public static String EXCEPTION_SSL = "Location: https://127.0.0.1:8021";
 
 	public static String MSG_PROTOCOL_GET = "GET";
 	public static String MSG_PROTOCOL_POST = "POST";
@@ -59,6 +56,7 @@ public class ClientThread implements Runnable {
 	public static String MSG_PROTOCOL_HEADER_CLICKJACK = "X-Frame-Options: deny";
 	public static String COOKIENAME = "UserCookieId";
 	public static String MSG_PROTOCOL_HEADER_COOKIE = "Set-Cookie: "+COOKIENAME+"=";
+	public static String MSG_PROTOCOL_HEADER_COOKIE_TAIL = "; Path=/;";
 	public static String MSG_PROTOCOL_REQUEST_HEADER_COOKIE = "Cookie: "+COOKIENAME+"=";
 
 
@@ -83,6 +81,7 @@ public class ClientThread implements Runnable {
 
 	public static String POST_USERNAME = "username";
 	public static String POST_PASSWORD = "password";
+	public static String POST_ROLE = "role";
 
 	/** The socket on which the client is connected */
 	private Socket socket;
@@ -152,15 +151,6 @@ public class ClientThread implements Runnable {
 
 		} catch (SocketException e) {
 			printLine(ERROR_CLIENT_CLOSED_CONNECTION, 3);
-		} catch(SSLException e) {
-			//TODO fix isn't working at all
-			sendResponseHeader(301, 0);
-			try {
-				sendLine(EXCEPTION_SSL);
-			} catch(IOException ex) {
-				ex.printStackTrace();
-			}
-			return;
 		} catch (Exception e) {
 			// TODO
 			e.printStackTrace();
@@ -261,7 +251,7 @@ public class ClientThread implements Runnable {
 		// Als we directories mogen listen
 		// en de opgevraagde resource is een map
 		if (directoryBrowsingAllowed && file.isDirectory()) {        	
-			String folderContent = listFolderContent(uri);
+			String folderContent = HtmlProvider.listFolderContent(uri); 
 			sendResponseHeader(200, folderContent.length());
 
 			sendLine(folderContent);
@@ -284,7 +274,7 @@ public class ClientThread implements Runnable {
 		// TODO
 		// Dit moet anders 
 		if(uri.equals(ADMIN_URI)) {
-			String form = getManageForm();
+			String form = HtmlProvider.getManageForm(user);
 			sendResponseHeader(200, form.length());
 
 			sendLine(form);
@@ -294,12 +284,12 @@ public class ClientThread implements Runnable {
 		if(uri.equals(URI_LOGOUT)) {
 			System.out.println("logout");
 			user.destroyCookieId();
-			
+
 			MySQLAccess msa = new MySQLAccess();
 			msa.storeUser(user);
 			msa.close();
 			user = new User();
-			
+
 			redirectUrl(ADMIN_URI);
 			return;
 		}
@@ -309,7 +299,7 @@ public class ClientThread implements Runnable {
 				plot403();
 				return;
 			}
-			String log = getLog();
+			String log = HtmlProvider.getLog();
 			sendResponseHeader(200, log.length());
 			sendLine(log);
 			return;
@@ -327,40 +317,47 @@ public class ClientThread implements Runnable {
 			return;
 		}
 
+		if(uri.equals(URI_USERS)) {
+			if(!user.isLoggedIn() || !user.hasRole(User.ROLE_BEHEERDERS)) {
+				plot403();
+				return;
+			}
+			String users = HtmlProvider.listUserContent();
+			sendResponseHeader(200, users.length());
+			sendLine(users);
+			return;
+		}
+
+
+		if(uri.equals(URI_USER_NEW)) {
+			if(!user.isLoggedIn() || !user.hasRole(User.ROLE_BEHEERDERS)) {
+				plot403();
+				return;
+			}
+			String userForm = HtmlProvider.getNewUserForm();
+			sendResponseHeader(200, userForm.length());
+			sendLine(userForm);
+			return;
+		}
+
+		if(uri.contains(URI_USER_DELETE)) {
+			if(!user.isLoggedIn() || !user.hasRole(User.ROLE_BEHEERDERS)) {
+				plot403();
+				return;
+			}
+			int id = Integer.parseInt(uri.substring(URI_USER_DELETE.length()));
+
+			MySQLAccess msa = new MySQLAccess();
+			msa.deleteUser(id);
+			msa.close();
+			redirectUrl(URI_USERS);
+			return;
+		}
+
 		// Als de opgevraagde resource niet bestaat
 		// dan 404 tonen
 		plot404();
 		printLine(ERROR_CLIENT_FILENOTEXISTS, 3);
-	}
-
-	// TODO
-	// memory management + styling
-	/**
-	 * Opens the access log file, and adds
-	 * some basic html.
-	 * 
-	 * @return String
-	 * @throws IOException
-	 */
-	protected String getLog() throws IOException {
-		String retVal = "<table>"
-				+ "<tbody>";
-
-		FileInputStream fstream = new FileInputStream(Logger.LOG_FILE_ACCESS_EXTENDED);
-		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-
-		String strLine;
-
-		while ((strLine = br.readLine()) != null)   {
-			retVal += "<tr><td>" + strLine + "</td></tr>";
-		}
-
-		br.close();
-
-		retVal += "</tbody>"
-				+ "</table>";
-
-		return retVal;
 	}
 
 	protected void clearLogFiles() throws FileNotFoundException {
@@ -505,9 +502,25 @@ public class ClientThread implements Runnable {
 
 					msa.storeUser(user);
 					this.user = user;
-					handleGet(ADMIN_URI, "HTTP1.0");
+					handleGet(ADMIN_URI, MSG_PROTOCOL_HEADER_HTTP);
 					msa.close();
 				}
+			}
+		} else if(uri.equals(URI_USER_NEW)) {
+			printLine(post.toString(),2);
+			// UGLY :D
+			// - joh echt?
+			if(post.containsKey(POST_USERNAME) && post.containsKey(POST_PASSWORD) && post.containsKey(POST_ROLE)) {
+				User user = new User(post.get(POST_USERNAME), post.get(POST_PASSWORD), post.get(POST_ROLE));
+
+				MySQLAccess msa = new MySQLAccess();
+				msa.createUser(user);
+				msa.close();
+				redirectUrl(URI_USERS);
+				return;
+			} else {
+				redirectUrl(URI_USER_NEW);
+				return;
 			}
 		}
 
@@ -573,7 +586,7 @@ public class ClientThread implements Runnable {
 		try {
 			sendLine(MSG_PROTOCOL_HEADER_HTTP + status);
 			if(user.isLoggedIn()) {
-				sendLine(MSG_PROTOCOL_HEADER_COOKIE + user.getCookieId());
+				sendLine(MSG_PROTOCOL_HEADER_COOKIE + user.getCookieId() + MSG_PROTOCOL_HEADER_COOKIE_TAIL);
 			}
 			sendLine(MSG_PROTOCOL_HEADER_CONTENTTYPE + contentType);
 			sendLine(MSG_PROTOCOL_HEADER_CONTENTLENGTH + contentLength);
@@ -592,7 +605,7 @@ public class ClientThread implements Runnable {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void redirectUrl(String uri) {
 		try {
 			sendLine(MSG_PROTOCOL_HEADER_HTTP + STATUSCODE_307_STR);
@@ -601,7 +614,7 @@ public class ClientThread implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	/**
@@ -645,7 +658,7 @@ public class ClientThread implements Runnable {
 	protected void sendFile(FileResource fr) throws IOException {
 		// setup
 		FileInputStream fis = new FileInputStream(fr);
-		BufferedInputStream bis = new BufferedInputStream(fis, bufferSize);
+		BufferedInputStream bis = new BufferedInputStream(fis, BUFFERSIZE);
 		DataInputStream dis = new DataInputStream(bis);
 		OutputStream os = socket.getOutputStream();
 		DataOutputStream dos = new DataOutputStream(os);
@@ -661,78 +674,6 @@ public class ClientThread implements Runnable {
 
 		// close the datainputstream
 		dis.close();
-	}
-
-	/**
-	 * Build and send directory structure to client for the given uri
-	 * @param uri
-	 * @return
-	 */
-	protected String listFolderContent(String uri) {
-		String path = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + URI_DELIMITER + uri;
-		File f = new File(path);
-		List<File> list = Arrays.asList(f.listFiles());
-		Iterator<File> fileIterator = list.iterator();
-
-		String fileListingHtml = "<h1>Index of " + uri + "</h1>";
-		fileListingHtml += "<table>";
-		fileListingHtml += "<thead style=\"text-align:left;\">";
-		fileListingHtml += "<tr>";
-		fileListingHtml += "<th style=\"padding:10px\">filename</th>";
-		fileListingHtml += "<th style=\"padding:10px\">lastmodified</th>";
-		fileListingHtml += "<th style=\"padding:10px\">size</th>";
-		fileListingHtml += "</tr>";
-		fileListingHtml += "</thead>";
-		fileListingHtml += "<tbody>";
-
-		if (!uri.equals(URI_DELIMITER)) {
-			// Parent uri opbouwen
-			ArrayList<String> uriParts = new ArrayList<String>(Arrays.asList(uri.split(URI_DELIMITER)));
-
-			if ((uriParts.size() -1) > 0) {
-				uriParts.remove(uriParts.size()-1);
-			}
-
-			Iterator<String> uriIterator = uriParts.iterator();
-			String newUri = URI_DELIMITER;
-
-			while(uriIterator.hasNext()) {
-				String uriPart = uriIterator.next();
-
-				if (!uriPart.equals(EMPTY_STR)) {
-					newUri += uriPart + URI_DELIMITER;	
-				}
-			}			
-
-			fileListingHtml += "<tr>";
-			fileListingHtml += "<td style=\"padding:10px\" colspan=\"3\"><a href=\""+newUri+"\">Parent Directory</a></td>";
-			fileListingHtml += "</tr>";
-		}
-
-		// Date formatter voor de lastmodified date van de file
-		SimpleDateFormat sdf = new SimpleDateFormat(DEFAULT_DATE_FORMAT);
-
-		while(fileIterator.hasNext()) {
-			File file = fileIterator.next();
-			String filePath = uri;
-
-			if (uri.equals(URI_DELIMITER)) {
-				filePath = uri + file.getName();
-			} else {
-				filePath = uri + URI_DELIMITER +file.getName();
-			}
-
-			fileListingHtml += "<tr>";
-			fileListingHtml += "<td style=\"padding:10px\"><a href=\""+ filePath +"\">"+file.getName()+"</a></td>";
-			fileListingHtml += "<td style=\"padding:10px\">"+sdf.format(file.lastModified())+"</td>";
-			fileListingHtml += "<td style=\"padding:10px\">"+file.length()+"</td>";
-			fileListingHtml += "</tr>";
-		}
-
-		fileListingHtml += "</tbody>";
-		fileListingHtml += "</table>";
-
-		return fileListingHtml;
 	}
 
 	/**
@@ -765,86 +706,7 @@ public class ClientThread implements Runnable {
 		System.out.println(fm);
 	}
 
-	/**
-	 * Get the form the manage the server configuration
-	 * @return
-	 */
-	protected String getManageForm(){
-		String admin = "";
-		if(user.isLoggedIn()) {
-			admin +=  "<form method=\"post\" action=\"" +
-					ADMIN_URI +
-					"\">\n" +
-					"<table>\n" +
-					"<thead>\n" +
-					"    <tr><th>SuperServer</th><th class=\"right\">Control Panel</th></tr>\n" +
-					"</thead>\n" +
-					"<tbody>\n" +
-					"    <tr><td>Web port:</td><td><input name=\"port\" value=\"" +
-					""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT)+"" +
-					"\" ";
-			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
-				admin += "disabled=\"disabled\"";
-			}
-			admin += "type=\"text\"></td></tr>\n" +
-					"    <tr><td>Webroot:</td><td><input name=\"docroot\" value=\"" +
-					""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT)+"" +
-					"\" ";
-			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
-				admin += "disabled=\"disabled\"";
-			}
-			admin += "type=\"text\"></td></tr>\n" +
-					"    <tr><td>Default page:</td><td><input name=\"defaultpage\" value=\"" +
-					""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE)+"" +
-					"\" ";
-			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
-				admin += "disabled=\"disabled\"";
-			}
-			admin += "type=\"text\"></td></tr>\n" +
-					"    <tr><td>Directory browsing</td><td><input name=\"directorybrowsing\" type=\"checkbox\"";
-			if(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING).equals(ConfigPropertyValues.CONFIG_VALUE_STR_TRUE)) {
-				admin += " checked=\"checked\"";
-			}
-
-			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
-				admin += "disabled=\"disabled\"";
-			}
-
-			admin += "></td></tr>\n" +
-					"    <tr><td><a href=\"" + URI_SHOWLOG + "\">Show log</a></td>\n" +
-					"        <td class=\"right\"><input value=\"OK\"";
-			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
-				admin += "disabled=\"disabled\"";
-			}
-			admin += " type=\"submit\"></td>\n" +
-					"    </tr>\n";
-			if(user.hasRole(User.ROLE_BEHEERDERS)) {		
-				admin += "    <tr><td><a href=\"" + URI_CLEARLOGS + "\">Clear logs</a></td></tr>\n";
-			}
-			admin += "    <tr><td><a href=\"" + URI_LOGOUT + "\">Logout</a></td></tr>\n";
-			admin += " </tbody>\n" +
-					"</table>\n" +
-					"</form>";
-		} else {
-			admin += "<form method=\"post\" action=\"" +
-					ADMIN_URI +
-					"\">\n" +
-					"<table>\n" +
-					"<thead>\n" +
-					"    <tr><th>Login</th><th class=\"right\"></th></tr>\n" +
-					"</thead>\n" +
-					"<tbody>\n" +
-					"    <tr><td>Username:</td><td><input name=\"username\" value=\"\" type=\"text\"></td></tr>\n" +
-					"    <tr><td>Password:</td><td><input name=\"password\" value=\"\" type=\"password\"></td></tr>\n" +
-					"    <tr><td></td>\n" +
-					"        <td class=\"right\"><input value=\"OK\" type=\"submit\"></td>\n" +
-					"    </tr>\n" +
-					"</tbody>\n" +
-					"</table>\n" +
-					"</form>";
-		}
-		return admin;
-	}
+	
 
 	/**
 	 * Get content type for given file resource.
@@ -873,9 +735,11 @@ public class ClientThread implements Runnable {
 			return;
 		} 
 		user.setLoggedIn(true);
-		user.generateCookieId();
 
-		msa.storeUser(user);
+		//Regenerate token
+		//user.generateCookieId();
+
+		//msa.storeUser(user);
 		this.user = user;
 		msa.close();
 	}

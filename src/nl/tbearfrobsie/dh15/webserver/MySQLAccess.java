@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class MySQLAccess {
 	private Connection connect = null;
@@ -16,7 +17,7 @@ public class MySQLAccess {
 		try {
 			// This will load the MySQL driver, each DB has its own driver
 			Class.forName("com.mysql.jdbc.Driver");
-			
+
 			String host = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_DATABASE_HOST);
 			String name = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_DATABASE_NAME);
 			String username = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_DATABASE_USERNAME);
@@ -39,7 +40,11 @@ public class MySQLAccess {
 			preparedStatement = connect.prepareStatement("SELECT * FROM user WHERE username = ? ;");
 			preparedStatement.setString(1, username);
 			resultSet = preparedStatement.executeQuery();
-			return writeResultSet(resultSet);
+			if(resultSet.next()){
+				return writeResultSet(resultSet);
+			} else {
+				return null;
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -47,13 +52,17 @@ public class MySQLAccess {
 		return null;
 
 	}
-	
+
 	public User readUserByCookie(String cookie) {
 		try {
 			preparedStatement = connect.prepareStatement("SELECT * FROM user WHERE cookieId = ? ;");
 			preparedStatement.setString(1, cookie);
 			resultSet = preparedStatement.executeQuery();
-			return writeResultSet(resultSet);
+			if(resultSet.next()){
+				return writeResultSet(resultSet);
+			} else {
+				return null;
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -62,6 +71,32 @@ public class MySQLAccess {
 
 	}
 	
+	public void deleteUser(int id) {
+		try {
+			preparedStatement = connect.prepareStatement("DELETE FROM user WHERE id = ? ;");
+			preparedStatement.setInt(1, id);
+			preparedStatement.executeUpdate();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public ArrayList<User> readUsers() {
+		try {
+			preparedStatement = connect.prepareStatement("SELECT * FROM user;");
+			resultSet = preparedStatement.executeQuery();
+			ArrayList<User> users = new ArrayList<User>();
+			while(resultSet.next()) {
+				users.add(writeResultSet(resultSet));
+			}
+			return users;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return new ArrayList<User>();
+
+	}
+
 	public void storeUser(User user) {
 		try {
 			preparedStatement = connect.prepareStatement("UPDATE user SET cookieId = ? WHERE id = ?;");
@@ -72,20 +107,29 @@ public class MySQLAccess {
 			e.printStackTrace();
 		}
 	}
+	
+	public void createUser(User user) {
+		try {
+			preparedStatement = connect.prepareStatement("INSERT INTO user (username, password, role) VALUES (?,?,?);");
+			preparedStatement.setString(1, user.getUsername());
+			preparedStatement.setString(2, user.getPassword());
+			preparedStatement.setString(3, user.getRole());
+			preparedStatement.executeUpdate();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	private User writeResultSet(ResultSet resultSet) throws SQLException {
 		// ResultSet is initially before the first data set
-		if(resultSet.next()){
-			int id = resultSet.getInt("id");
-			String user = resultSet.getString("username");
-			String password = resultSet.getString("password");
-			String role = resultSet.getString("role");
-			String cookieId = resultSet.getString("cookieId");
-			
-			return new User(id, user, password, role, cookieId);
-		} else {
-			return null;
-		}
+		int id = resultSet.getInt("id");
+		String user = resultSet.getString("username");
+		String password = resultSet.getString("password");
+		String role = resultSet.getString("role");
+		String cookieId = resultSet.getString("cookieId");
+
+		return new User(id, user, password, role, cookieId);
+
 	}
 
 	// You need to close the resultSet
