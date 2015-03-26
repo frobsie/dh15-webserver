@@ -28,7 +28,7 @@ public class HtmlProvider {
 		String admin = header();
 		if(user.isLoggedIn()) {
 			admin +=  "<form method=\"post\" action=\"" +
-					ClientThread.ADMIN_URI +
+					Constant.ADMIN_URI +
 					"\">\n" +
 					"<table>\n" +
 					"<thead>\n" +
@@ -66,7 +66,7 @@ public class HtmlProvider {
 			}
 
 			admin += "></td></tr>\n" +
-					"    <tr><td><a href=\"" + ClientThread.URI_SHOWLOG + "\">Show log</a></td>\n" +
+					"    <tr><td><a href=\"" + Constant.URI_SHOWLOG + "\">Show log</a></td>\n" +
 					"        <td class=\"right\"><input value=\"OK\"";
 			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
 				admin += "disabled=\"disabled\"";
@@ -74,17 +74,17 @@ public class HtmlProvider {
 			admin += " type=\"submit\"></td>\n" +
 					"    </tr>\n";
 			if(user.hasRole(User.ROLE_BEHEERDERS)) {		
-				admin += "    <tr><td><a href=\"" + ClientThread.URI_CLEARLOGS + "\">Clear logs</a></td></tr>\n";
-				admin += "    <tr><td><a href=\"" + ClientThread.URI_USERS + "\">Users</a></td></tr>\n";
+				admin += "    <tr><td><a href=\"" + Constant.URI_CLEARLOGS + "\">Clear logs</a></td></tr>\n";
+				admin += "    <tr><td><a href=\"" + Constant.URI_USERS + "\">Users</a></td></tr>\n";
 			}
 
-			admin += "    <tr><td><a href=\"" + ClientThread.URI_LOGOUT + "\">Logout</a></td></tr>\n";
+			admin += "    <tr><td><a href=\"" + Constant.URI_LOGOUT + "\">Logout</a></td></tr>\n";
 			admin += " </tbody>\n" +
 					"</table>\n" +
 					"</form>";
 		} else {
 			admin += "<form method=\"post\" action=\"" +
-					ClientThread.ADMIN_URI +
+					Constant.ADMIN_URI +
 					"\">\n" +
 					"<table>\n" +
 					"<thead>\n" +
@@ -105,7 +105,7 @@ public class HtmlProvider {
 
 	public static String getNewUserForm() {
 		return header() + "<form method=\"post\" action=\"" +
-				ClientThread.URI_USER_NEW +
+				Constant.URI_USER_NEW +
 				"\">\n" +
 				"<table>\n" +
 				"<thead>\n" +
@@ -129,7 +129,7 @@ public class HtmlProvider {
 
 		msa.close();
 
-		String usertabel =  header() + "<a href=\""+ClientThread.URI_USER_NEW+"\">Gebruiker toevoegen</a>"
+		String usertabel =  header() + "<a href=\""+Constant.URI_USER_NEW+"\">Gebruiker toevoegen</a>"
 				+ "<table>"
 				+ "<tr>"
 				+ "<td>"
@@ -155,7 +155,7 @@ public class HtmlProvider {
 						+ "<tr>"
 						+ "<td>"+user.getUsername()+"</td>"
 						+ "<td>"+user.getRole()+"</td>"
-						+ "<td><a href=\""+ClientThread.URI_USER_DELETE+user.getId()+"\">Verwijderen</a></td>"
+						+ "<td><a href=\""+Constant.URI_USER_DELETE+user.getId()+"\">Verwijderen</a></td>"
 						+ "</tr>";
 			}
 
@@ -204,7 +204,7 @@ public class HtmlProvider {
 	 * @return
 	 */
 	public static String listFolderContent(String uri) {
-		String path = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + ClientThread.URI_DELIMITER + uri;
+		String path = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + Constant.URI_DELIMITER + uri;
 		File f = new File(path);
 		List<File> list = Arrays.asList(f.listFiles());
 		Iterator<File> fileIterator = list.iterator();
@@ -220,22 +220,22 @@ public class HtmlProvider {
 		fileListingHtml += "</thead>";
 		fileListingHtml += "<tbody>";
 
-		if (!uri.equals(ClientThread.URI_DELIMITER)) {
+		if (!uri.equals(Constant.URI_DELIMITER)) {
 			// Parent uri opbouwen
-			ArrayList<String> uriParts = new ArrayList<String>(Arrays.asList(uri.split(ClientThread.URI_DELIMITER)));
+			ArrayList<String> uriParts = new ArrayList<String>(Arrays.asList(uri.split(Constant.URI_DELIMITER)));
 
 			if ((uriParts.size() -1) > 0) {
 				uriParts.remove(uriParts.size()-1);
 			}
 
 			Iterator<String> uriIterator = uriParts.iterator();
-			String newUri = ClientThread.URI_DELIMITER;
+			String newUri = Constant.URI_DELIMITER;
 
 			while(uriIterator.hasNext()) {
 				String uriPart = uriIterator.next();
 
-				if (!uriPart.equals(ClientThread.EMPTY_STR)) {
-					newUri += uriPart + ClientThread.URI_DELIMITER;	
+				if (!uriPart.equals(Constant.EMPTY_STR)) {
+					newUri += uriPart + Constant.URI_DELIMITER;	
 				}
 			}			
 
@@ -245,16 +245,16 @@ public class HtmlProvider {
 		}
 
 		// Date formatter voor de lastmodified date van de file
-		SimpleDateFormat sdf = new SimpleDateFormat(ClientThread.DEFAULT_DATE_FORMAT);
+		SimpleDateFormat sdf = new SimpleDateFormat(Constant.DEFAULT_DATE_FORMAT);
 
 		while(fileIterator.hasNext()) {
 			File file = fileIterator.next();
 			String filePath = uri;
 
-			if (uri.equals(ClientThread.URI_DELIMITER)) {
+			if (uri.equals(Constant.URI_DELIMITER)) {
 				filePath = uri + file.getName();
 			} else {
-				filePath = uri + ClientThread.URI_DELIMITER +file.getName();
+				filePath = uri + Constant.URI_DELIMITER +file.getName();
 			}
 
 			fileListingHtml += "<tr>";

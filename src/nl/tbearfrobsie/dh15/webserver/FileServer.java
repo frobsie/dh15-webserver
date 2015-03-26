@@ -5,9 +5,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManagerFactory;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -27,9 +25,6 @@ public class FileServer {
 	/** ServerSocket */
 	private SSLServerSocket serverSocket;
 
-	/** Is the server running? */
-	public boolean isRunning = true;
-
 	/**
 	 * Starts the fileserver
 	 * 
@@ -48,18 +43,18 @@ public class FileServer {
 				createSSLServerSocket();
 				//serverSocket = new ServerSocket(port);
 
-				while (isRunning) {
+				while (true) {
 					// accept connections
 					SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
 					//Socket clientSocket = serverSocket.accept();
 
 					// start new thread for incoming connection
-					Thread t = new Thread(new ClientThread(clientSocket, this));
+					Thread t = new Thread(new ClientThread(new Communication(clientSocket), this));
 					t.start();
 				}
-				this.closeServer();
 			} catch (Exception e) {
 				// restart server
+				e.printStackTrace();
 			}
 		}
 	}

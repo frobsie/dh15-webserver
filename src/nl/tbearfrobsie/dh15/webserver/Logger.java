@@ -1,6 +1,7 @@
 package nl.tbearfrobsie.dh15.webserver;
 
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -65,5 +66,45 @@ public class Logger {
 	        // TODO
 	    	System.out.println(e.getMessage());
 	    }
+	}
+	
+	/**
+	 * Print a formatted debug line to the console
+	 * @param message
+	 * @param sendType
+	 */
+	public static void printLine(String message, Integer sendType) {
+		String fm = Constant.EMPTY_STR;
+
+		switch (sendType) {
+		default:
+		case 0:
+			fm += Constant.SERVER_STDOUT_SERVER;
+			break;
+		case 1:
+			fm += Constant.SERVER_STDOUT_SEND;
+			break;
+		case 2:
+			fm += Constant.SERVER_STDOUT_RECV;
+			break;
+		case 3:
+			fm += Constant.SERVER_STDOUT_ERROR;
+			break;
+		}
+		
+		fm += message;
+
+		System.out.println(fm);
+	}
+	
+	public static void clearLogFiles() throws FileNotFoundException {
+		PrintWriter a = new PrintWriter(Logger.LOG_FILE_ACCESS);
+		PrintWriter ax = new PrintWriter(Logger.LOG_FILE_ACCESS_EXTENDED);
+
+		a.print(Constant.EMPTY_STR);
+		ax.print(Constant.EMPTY_STR);
+
+		a.close();
+		ax.close();
 	}
 }
