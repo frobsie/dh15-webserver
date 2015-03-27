@@ -1,5 +1,6 @@
 package nl.tbearfrobsie.dh15.webserver;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -58,4 +59,23 @@ public class ConfigPropertyValues {
     public static void set(String key, String value) {
         ConfigPropertyValues.props.setProperty(key, value);
     }
+    
+    /**
+	 * Collect the default page from the config and check if one of the options exists.
+	 * @return String 
+	 */
+	public static String getDefaultpageUri() {
+		String[] lineSplit = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE).split(";");
+		for(int i = 0; i < lineSplit.length; i++) {
+			File file = new File(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + Constant.URI_DELIMITER + lineSplit[i]);
+			if(file.exists()) {
+				return Constant.URI_DELIMITER + lineSplit[i];
+			}
+		}
+		return Constant.URI_DELIMITER + lineSplit[0];
+	}
+	
+	public static boolean isDirectoryBrowsingAllowed() {
+		return Boolean.valueOf(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING));
+	}
 }

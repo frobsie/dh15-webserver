@@ -155,7 +155,7 @@ public class HtmlProvider {
 						+ "<tr>"
 						+ "<td>"+user.getUsername()+"</td>"
 						+ "<td>"+user.getRole()+"</td>"
-						+ "<td><a href=\""+Constant.URI_USER_DELETE+user.getId()+"\">Verwijderen</a></td>"
+						+ "<td><a href=\""+Constant.URI_USER_DELETE+Constant.URI_USER_DELETE_ID+user.getId()+"\">Verwijderen</a></td>"
 						+ "</tr>";
 			}
 
