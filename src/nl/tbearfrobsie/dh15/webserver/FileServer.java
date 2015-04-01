@@ -22,7 +22,7 @@ public class FileServer {
 	public static String CERTIFICATE_TYPE = "SunX509";
 	public static String CERTIFICATE_CONTEXT = "TLS";
 
-	/** ServerSocket */
+	/** SSLServerSocket */
 	private SSLServerSocket serverSocket;
 
 	/**
@@ -59,6 +59,12 @@ public class FileServer {
 		}
 	}
 
+	/**
+	 * Tries to create a new SSLServerSocket
+	 * by processing the given keystore.
+	 * 
+	 * @return void
+	 */
 	private void createSSLServerSocket() {
 		try{
 			int port = new Integer(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT));
@@ -89,7 +95,11 @@ public class FileServer {
 		}
 	}
 
-
+	/**
+	 * Closes the server.
+	 * 
+	 * @return void
+	 */
 	public void closeServer() {
 		try {
 			serverSocket.close();
@@ -100,7 +110,8 @@ public class FileServer {
 	/**
 	 * Main
 	 * 
-	 * @param args
+	 * @param String[] args
+	 * @return void
 	 */
 	public static void main(String[] args)
 	{		

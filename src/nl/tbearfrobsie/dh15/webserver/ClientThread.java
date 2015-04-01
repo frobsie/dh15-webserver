@@ -27,7 +27,11 @@ public class ClientThread implements Runnable {
 	}
 
 	/**
-	 * Runnable implementation
+	 * Runnable implementation.
+	 * Creates a HTTPHandler with given Communication
+	 * object and starts its handlers.
+	 * 
+	 * @return void
 	 */
 	@Override
 	public void run() {

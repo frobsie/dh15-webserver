@@ -26,6 +26,15 @@ public class HTTPHandler {
 	/** Custom user implementation */
 	private User user;
 	
+	/**
+	 * Constructor
+	 * Creates the HTTPHandler, checks
+	 * if the client is allowed to view 
+	 * directory listings and create an
+	 * instance of the user object.
+	 * 
+	 * @param Communcation comm
+	 */
 	public HTTPHandler(Communication comm) {
 		this.comm = comm;
 		
@@ -33,6 +42,16 @@ public class HTTPHandler {
 		user = new User();
 	}
 	 
+	/**
+	 * Reads lines from the Communication
+	 * object into an ArrayList and passes
+	 * this list along to the readRequestMethod
+	 * functionality.
+	 * 
+	 * @throws IOException
+	 * @throws Exception
+	 * @return void
+	 */
 	public void handle() throws IOException, Exception {
 		ArrayList<String> lines = comm.readTillEmptyLine();
 
@@ -44,10 +63,11 @@ public class HTTPHandler {
 	}
 	
 	/**
-	 * Handles user input
+	 * Handles user input.
 	 *
 	 * @param lines
 	 * @throws IOException
+	 * @return void
 	 */
 	protected void readRequestMethod(ArrayList<String> lines) throws IOException, Exception {
 		String line = lines.get(0);
@@ -88,7 +108,7 @@ public class HTTPHandler {
 	}
 	
 	/**
-	 * Returns a formatted log entry string
+	 * Returns a formatted log entry string.
 	 * 
 	 * @param String line
 	 * @return String
