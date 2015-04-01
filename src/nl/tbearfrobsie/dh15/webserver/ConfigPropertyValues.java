@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import nl.tbearfrobsie.dh15.webserver.util.Constant;
 
 public class ConfigPropertyValues {
     public static Properties props;
@@ -36,6 +37,12 @@ public class ConfigPropertyValues {
     public static String CONFIG_VALUE_STR_TRUE = "true";
     public static String CONFIG_VALUE_STR_FALSE = "false";
 
+    /**
+     * Loads the configuration file.
+     * 
+     * @throws IOException
+     * @return void
+     */
     public static void load() throws IOException {
         Properties prop = new Properties();
 
@@ -45,17 +52,36 @@ public class ConfigPropertyValues {
         ConfigPropertyValues.props = prop;
     }
 
+    /**
+     * Writes all the instance settings
+     * to the config file.
+     * 
+     * @throws IOException
+     * @return void
+     */
     public static void write() throws IOException {
         FileOutputStream out = new FileOutputStream(ConfigPropertyValues.propFileName);
         ConfigPropertyValues.props.store(out, null);
         out.close();
     }
 
+    /**
+     * Retrieves a config value by its key.
+     * 
+     * @param String key
+     * @return String
+     */
     public static String get(String key) {
     	// replace %3b with ;
         return ConfigPropertyValues.props.getProperty(key).replace("%3B", ";").replace("%2F", "/");
     }
 
+    /**
+     * Sets a config key with value.
+     * 
+     * @param String key
+     * @param String value
+     */
     public static void set(String key, String value) {
         ConfigPropertyValues.props.setProperty(key, value);
     }

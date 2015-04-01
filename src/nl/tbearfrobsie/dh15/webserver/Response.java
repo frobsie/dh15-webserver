@@ -2,11 +2,13 @@ package nl.tbearfrobsie.dh15.webserver;
 
 import java.io.IOException;
 import java.net.URLConnection;
+import nl.tbearfrobsie.dh15.webserver.util.Constant;;
 
 public class Response {
 	private Communication comm;
 	private User user;
 	
+	/** The last statuscode sent to a client */
 	public Integer lastSentStatusCode = -1;
 	
 	public Response(Communication comm, User user, HTTPHandler httpHandler) {
@@ -16,6 +18,7 @@ public class Response {
 	
 	/**
 	 * send 404 page to the user.
+	 * 
 	 * @throws IOException
 	 */
 	public void plot404() throws IOException {
@@ -28,6 +31,7 @@ public class Response {
 
 	/**
 	 * send 403 page to the user.
+	 * 
 	 * @throws IOException
 	 */
 	public void plot403() throws IOException {
@@ -40,6 +44,7 @@ public class Response {
 
 	/**
 	 * send 400 page to the user.
+	 * 
 	 * @throws IOException
 	 */
 	public void plot400() throws IOException {
@@ -52,6 +57,7 @@ public class Response {
 	
 	/**
 	 * Get content type for given file resource.
+	 * 
 	 * @param file
 	 * @return
 	 */
@@ -68,8 +74,10 @@ public class Response {
 	
 	/**
 	 * send response headers to the client
+	 * 
 	 * @param statusCode
 	 * @param contentLength
+	 * @return void
 	 */
 	public void sendResponseHeader(int statusCode, int contentLength){
 		sendResponseHeader(statusCode, contentLength, Constant.MSG_PROTOCOL_DEFAULTMIMETYPE);
@@ -81,6 +89,7 @@ public class Response {
 	 * @param statusCode
 	 * @param contentLength
 	 * @param contentType
+	 * @return void
 	 */
 	public void sendResponseHeader(int statusCode, int contentLength, String contentType) {
 		String status = null;
@@ -131,8 +140,10 @@ public class Response {
 	}
 
 	/**
-	 * redirect browser to uri
+	 * Redirects a client
+	 * 
 	 * @param uri
+	 * @return void
 	 */
 	public void redirectUrl(String uri) {
 		try {
@@ -153,5 +164,3 @@ public class Response {
 	}
 	
 }
-
-

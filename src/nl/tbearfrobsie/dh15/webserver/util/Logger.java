@@ -1,4 +1,4 @@
-package nl.tbearfrobsie.dh15.webserver;
+package nl.tbearfrobsie.dh15.webserver.util;
 
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;

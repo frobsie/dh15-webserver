@@ -11,11 +11,25 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public class HtmlProvider {
+import nl.tbearfrobsie.dh15.webserver.util.Constant;
+import nl.tbearfrobsie.dh15.webserver.util.Logger;
 
+public class HTMLProvider {
+
+	/**
+	 * Generates a HTML 5 DOCTYPE,
+	 * header and body start tag.
+	 * @return String
+	 */
 	public static String header() {
 		return "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\" />\n</head>\n<body>\n";
 	}
+	
+	/**
+	 * Closes the body and html tag.
+	 *  
+	 * @return String
+	 */
 	public static String tail() {
 		return "\n</body>\n</html>";
 	}
@@ -42,7 +56,9 @@ public class HtmlProvider {
 	}
 
 	/**
-	 * Get the form the manage the server configuration
+	 * Get the form the manage the server configuration.
+	 * 
+	 * @param User user
 	 * @return
 	 */
 	public static String getManageForm(User user) {
@@ -106,6 +122,12 @@ public class HtmlProvider {
 		return admin + tail();
 	}
 
+	/**
+	 * Generates a form with which
+	 * a user can be created.
+	 * 
+	 * @return String
+	 */
 	public static String getNewUserForm() {
 		return header() + "<form method=\"post\" action=\"" +
 				Constant.URI_USER_NEW +
@@ -126,6 +148,12 @@ public class HtmlProvider {
 				"</form>" + tail();
 	}
 
+	/**
+	 * Generates a table which lists
+	 * all the users currently available in the system.
+	 * 
+	 * @return String
+	 */
 	public static String listUserContent() {
 		MySQLAccess msa = new MySQLAccess();
 		ArrayList<User> users = msa.readUsers();
@@ -164,9 +192,7 @@ public class HtmlProvider {
 
 		}
 
-
 		usertabel += "</table>" + tail();
-
 
 		return usertabel;
 	}

@@ -1,19 +1,38 @@
 package nl.tbearfrobsie.dh15.webserver;
 
 import java.io.File;
+
 import java.io.IOException;
 import java.util.Iterator;
 
-public class HTTPHandler {
+import nl.tbearfrobsie.dh15.webserver.exception.UpdatedConfigException;
+import nl.tbearfrobsie.dh15.webserver.util.Constant;
+import nl.tbearfrobsie.dh15.webserver.util.Logger;
 
+public class HTTPHandler {
+	
+	/** Our custom socket wrapper */
 	private Communication comm;
 
+	/** Custom user implementation */
 	private User user;
 
+	/** Request class */
 	private Request request;
 	
+	/** Response class */
 	private Response response;
 
+
+	/**
+	 * Constructor
+	 * Creates the HTTPHandler, checks
+	 * if the client is allowed to view 
+	 * directory listings and create an
+	 * instance of the user object.
+	 * 
+	 * @param Communcation comm
+	 */
 	public HTTPHandler(Communication comm) {
 		this.comm = comm;
 
@@ -21,9 +40,11 @@ public class HTTPHandler {
 	}
 
 	/**
-	 * Handle request response
+	 * Init request and response object
+	 * 
 	 * @throws IOException
 	 * @throws Exception
+	 * @return void
 	 */
 	public void handle() throws IOException, Exception {
 		try{
@@ -44,10 +65,11 @@ public class HTTPHandler {
 	}
 
 	/**
-	 * Handles user input
+	 * Handles user input.
 	 *
 	 * @param lines
 	 * @throws IOException
+	 * @return void
 	 */
 	protected void handleRequestMethod() throws IOException, Exception {
 		switch(request.getMethod()) {
@@ -66,12 +88,15 @@ public class HTTPHandler {
 		Logger.append(Logger.LOG_TYPE_ACCESS_EXTENDED, createAccessLogExtendedLine());
 	}
 
+	// TODO
+	// - uri verwerking moet los
 	/**
 	 * Temporary GET handler
 	 * 
-	 * @param uri
-	 * @param protocol
+	 * @param String uri
+	 * @param String protocol
 	 * @throws IOException
+	 * @return void
 	 */
 	private void handleGet() throws IOException {		
 
@@ -81,9 +106,9 @@ public class HTTPHandler {
 		// Als we directories mogen listen
 		// en de opgevraagde resource is een map
 		if (ConfigPropertyValues.isDirectoryBrowsingAllowed() && file.isDirectory()) {        	
-			String folderContent = HtmlProvider.listFolderContent(request.getUri()); 
+			String folderContent = HTMLProvider.listFolderContent(request.getUri()); 
 			response.sendResponseHeader(200, folderContent.length());
-
+			
 			comm.sendLine(folderContent);
 			return;
 		}
@@ -131,14 +156,16 @@ public class HTTPHandler {
 			break;
 		}
 	}
-
+	
 	/**
-	 * Handle POST requests 
-	 * @param uri
-	 * @param protocol
-	 * @param contentLength
+	 * Handle POST requests
+	 *  
+	 * @param String uri
+	 * @param String protocol
+	 * @param int contentLength
 	 * @throws IOException
 	 * @throws Exception
+	 * @return void
 	 */
 	protected void handlePost() throws IOException, Exception, UpdatedConfigException {
 		Logger.printLine(request.getPost().toString(),2);
@@ -167,7 +194,7 @@ public class HTTPHandler {
 			response.redirectUrl(Constant.SETTINGS_URI);
 			return;
 		}
-		String form = HtmlProvider.getLoginForm();
+		String form = HTMLProvider.getLoginForm();
 		response.sendResponseHeader(200, form.length());
 
 		comm.sendLine(form);
@@ -179,7 +206,7 @@ public class HTTPHandler {
 			return;
 		}
 		
-		String form = HtmlProvider.getManageForm(user);
+		String form = HTMLProvider.getManageForm(user);
 		response.sendResponseHeader(200, form.length());
 
 		comm.sendLine(form);
@@ -187,7 +214,10 @@ public class HTTPHandler {
 	}
 	
 	/**
-	 * Commit the logout action
+	 * Collect the default page from the config 
+	 * and check if one of the options exists.
+	 * 
+	 * @return String 
 	 */
 	private void handleLogout() {
 		user.destroyCookieId();
@@ -201,15 +231,17 @@ public class HTTPHandler {
 	}
 	
 	/**
-	 * Show log file
+	 * show log in browser
+	 * 
 	 * @throws IOException
+	 * @return void
 	 */
 	private void showLog() throws IOException {
 		if(!user.isLoggedIn()) {
 			response.plot403();
 			return;
 		}
-		String log = HtmlProvider.getLog();
+		String log = HTMLProvider.getLog();
 		response.sendResponseHeader(200, log.length());
 		comm.sendLine(log);
 	}
@@ -238,7 +270,7 @@ public class HTTPHandler {
 			response.plot403();
 			return;
 		}
-		String users = HtmlProvider.listUserContent();
+		String users = HTMLProvider.listUserContent();
 		response.sendResponseHeader(200, users.length());
 		comm.sendLine(users);
 	}
@@ -252,7 +284,8 @@ public class HTTPHandler {
 			response.plot403();
 			return;
 		}
-		String userForm = HtmlProvider.getNewUserForm();
+
+		String userForm = HTMLProvider.getNewUserForm();
 		response.sendResponseHeader(200, userForm.length());
 		comm.sendLine(userForm);
 	}
@@ -276,6 +309,11 @@ public class HTTPHandler {
 		response.redirectUrl(Constant.URI_USERS);
 	}
 
+	/**
+	 * Update config file
+	 * @throws IOException
+	 * @throws UpdatedConfigException
+	 */
 	private void processConfigUpdate() throws IOException, UpdatedConfigException {
 		if(!user.isLoggedIn() || !user.hasRole(User.ROLE_BEHEERDERS)) {
 			response.plot403();
@@ -317,6 +355,10 @@ public class HTTPHandler {
 		}
 	}
 
+	/**
+	 * Login user
+	 * @throws IOException
+	 */
 	private void processLoginUser() throws IOException {
 		if(request.postContains(Constant.POST_USERNAME) && request.postContains(Constant.POST_PASSWORD)) {
 			MySQLAccess msa = new MySQLAccess();
@@ -340,6 +382,11 @@ public class HTTPHandler {
 		}
 	}
 
+	/**
+	 * save new user
+	 * 
+	 * @throws IOException
+	 */
 	private void processNewUser() throws IOException {
 		if(!user.isLoggedIn() || !user.hasRole(User.ROLE_BEHEERDERS)) {
 			response.plot403();
@@ -360,6 +407,9 @@ public class HTTPHandler {
 		}
 	}
 
+	/**
+	 * Check is user is logged on
+	 */
 	private void loginUser() {
 		if(request.getUserCookieId().equals("")) {
 			return;
@@ -380,12 +430,24 @@ public class HTTPHandler {
 		msa.close();
 	}
 
-
+	/**
+	 * Returns a formatted log entry string.
+	 * 
+	 * @param String line
+	 * @return String
+	 */
 	protected String createAccessLogLine() {
 		String retVal = String.format("%s " + "\"" + request.getLogLine() + "\"" + " %s", comm.getSocketInfo(), response.lastSentStatusCode);
 		return retVal;
 	}
 
+	/**
+	 * Returns a formatted log entry string
+	 * including the entire request.
+	 * 
+	 * @param List<String> lines
+	 * @return String
+	 */
 	protected String createAccessLogExtendedLine() {
 		String retVal = Constant.EMPTY_STR; 
 

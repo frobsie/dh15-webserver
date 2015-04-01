@@ -3,12 +3,16 @@ package nl.tbearfrobsie.dh15.webserver;
 import java.io.IOException;
 import java.net.SocketException;
 
+import nl.tbearfrobsie.dh15.webserver.exception.UpdatedConfigException;
+import nl.tbearfrobsie.dh15.webserver.util.Constant;
+import nl.tbearfrobsie.dh15.webserver.util.Logger;
 
 public class ClientThread implements Runnable {
 
 	/** The socket on which the client is connected */
 	private Communication comm;
 	
+	/** Reference to the base server class */
 	public FileServer fileServer;
 
 	/**
@@ -23,7 +27,11 @@ public class ClientThread implements Runnable {
 	}
 
 	/**
-	 * Runnable implementation
+	 * Runnable implementation.
+	 * Creates a HTTPHandler with given Communication
+	 * object and starts its handlers.
+	 * 
+	 * @return void
 	 */
 	@Override
 	public void run() {
@@ -50,8 +58,4 @@ public class ClientThread implements Runnable {
 			e.printStackTrace();
 		}
 	}
-
-	
-
-	
 }

@@ -8,12 +8,22 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class MySQLAccess {
+	
+	/** Socket instance */
 	private Connection connect = null;
+	
+	/** Statement which holds a query */
 	private PreparedStatement preparedStatement = null;
+	
+	/** Database resultset */
 	private ResultSet resultSet = null;
 
+	/**
+	 * Constructor.
+	 * Tries to connect to a databse
+	 * based on values in the config.
+	 */
 	public MySQLAccess() {
-
 		try {
 			// This will load the MySQL driver, each DB has its own driver
 			Class.forName("com.mysql.jdbc.Driver");
@@ -35,6 +45,13 @@ public class MySQLAccess {
 		}
 	}
 
+	/**
+	 * Retrieves a user from the database
+	 * based on the given username.
+	 * 
+	 * @param String username
+	 * @return User
+	 */
 	public User readUser(String username) {
 		try {
 			preparedStatement = connect.prepareStatement("SELECT * FROM user WHERE username = ? ;");
@@ -45,14 +62,19 @@ public class MySQLAccess {
 			} else {
 				return null;
 			}
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
-
 	}
 
+	/**
+	 * Retrieves a user from the database
+	 * based on the given cookie.
+	 * 
+	 * @param String cookie
+	 * @return User
+	 */
 	public User readUserByCookie(String cookie) {
 		try {
 			preparedStatement = connect.prepareStatement("SELECT * FROM user WHERE cookieId = ? ;");
@@ -68,9 +90,14 @@ public class MySQLAccess {
 			e.printStackTrace();
 		}
 		return null;
-
 	}
 	
+	/**
+	 * Deletes a user from the database.
+	 * 
+	 * @param int id
+	 * @return void
+	 */
 	public void deleteUser(int id) {
 		try {
 			preparedStatement = connect.prepareStatement("DELETE FROM user WHERE id = ? ;");
@@ -81,6 +108,12 @@ public class MySQLAccess {
 		}
 	}
 
+	/**
+	 * Retrieves all available users
+	 * from the databse.
+	 * 
+	 * @return ArrayList<User>
+	 */
 	public ArrayList<User> readUsers() {
 		try {
 			preparedStatement = connect.prepareStatement("SELECT * FROM user;");
@@ -94,9 +127,14 @@ public class MySQLAccess {
 			e.printStackTrace();
 		}
 		return new ArrayList<User>();
-
 	}
 
+	/**
+	 * Updates a user in the database.
+	 * 
+	 * @param User user
+	 * @return void
+	 */
 	public void storeUser(User user) {
 		try {
 			preparedStatement = connect.prepareStatement("UPDATE user SET cookieId = ? WHERE id = ?;");
@@ -108,6 +146,12 @@ public class MySQLAccess {
 		}
 	}
 	
+	/**
+	 * Creates a new user.
+	 * 
+	 * @param User user
+	 * @return void
+	 */
 	public void createUser(User user) {
 		try {
 			preparedStatement = connect.prepareStatement("INSERT INTO user (username, password, role) VALUES (?,?,?);");
@@ -120,6 +164,13 @@ public class MySQLAccess {
 		}
 	}
 
+	/**
+	 * Save resultset in the database.
+	 * 
+	 * @param ResultSet resultSet
+	 * @return User
+	 * @throws SQLException
+	 */
 	private User writeResultSet(ResultSet resultSet) throws SQLException {
 		// ResultSet is initially before the first data set
 		int id = resultSet.getInt("id");
@@ -129,10 +180,12 @@ public class MySQLAccess {
 		String cookieId = resultSet.getString("cookieId");
 
 		return new User(id, user, password, role, cookieId);
-
 	}
 
-	// You need to close the resultSet
+	/**
+	 * Close a ResultSet object.
+	 * @return void
+	 */
 	public void close() {
 		try {
 			if (resultSet != null) {
@@ -143,8 +196,7 @@ public class MySQLAccess {
 				connect.close();
 			}
 		} catch (Exception e) {
-
+			// TODO
 		}
 	}
-
-} 
+}

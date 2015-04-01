@@ -14,12 +14,18 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import nl.tbearfrobsie.dh15.webserver.util.Constant;
+import nl.tbearfrobsie.dh15.webserver.util.Logger;
+
 public class Communication {
 
+	/** Base socket on which this class operates */ 
 	private Socket socket; 
 	
+	/** Is the socket initialized */
 	private boolean isInitialized = false;
 	
+	/** Inputstream bound to the above socket */
 	private InputStream inputStream;
 
 	/** Converts bytestream to characterstream */
@@ -31,26 +37,37 @@ public class Communication {
 	/** Writer for sending text to the client */
 	private PrintWriter printWriter;
 
-	
+	/**
+	 * Constructor.
+	 * 
+	 * @param socket
+	 * @throws IOException
+	 */
 	public Communication(Socket socket) throws IOException {
 		this.socket = socket;
 		initialize();
 	}
 	
+	/**
+	 * Retrieves the inputstream from the socket
+	 * and sets up the various readers and writers.
+	 * 
+	 * @throws IOException
+	 */
 	public void initialize() throws IOException {
 		if(!isInitialized){
 			inputStream = socket.getInputStream();
 			inputStreamReader = new InputStreamReader(inputStream);
 			bufferedReader = new BufferedReader(inputStreamReader);
 			printWriter = new PrintWriter(socket.getOutputStream(), true);
-
 		}
 	}
 	
 	/**
 	 * Read socket till an blank line is found
 	 * There is a blank line between the headers and the content
-	 * @return
+	 * 
+	 * @return ArrayList<String>
 	 * @throws IOException
 	 */
 	public ArrayList<String> readTillEmptyLine() throws IOException {
@@ -66,8 +83,9 @@ public class Communication {
 	}
 	
 	/**
-	 * get the socket information formatted
-	 * @return
+	 * Returns formatted socket information.
+	 * 
+	 * @return String
 	 */
 	public String getSocketInfo() {
 		String retVal = socket.getInetAddress() + ":" + socket.getPort();
@@ -76,7 +94,8 @@ public class Communication {
 
 	/**
 	 * Send line to client
-	 * @param message
+	 * 
+	 * @param String message
 	 * @throws IOException
 	 */
 	public void sendLine(String message) throws IOException {
@@ -84,10 +103,12 @@ public class Communication {
 	}
 
 	/**
-	 * send line to client
-	 * @param message
-	 * @param toOut
+	 * Send line to client
+	 * 
+	 * @param String message
+	 * @param boolean toOut
 	 * @throws IOException
+	 * @return void
 	 */
 	public void sendLine(String message, boolean toOut) throws IOException {
 		printWriter.println(message);
@@ -100,8 +121,9 @@ public class Communication {
 	/**
 	 * Sends a file to client using DataOutputStreams
 	 * 
-	 * @param filePath
+	 * @param FileResource fr
 	 * @throws IOException
+	 * @return void
 	 */
 	public void sendFile(FileResource fr) throws IOException {
 		// setup
@@ -124,6 +146,14 @@ public class Communication {
 		dis.close();
 	}
 	
+	/**
+	 * Retrieves a POST request from the 
+	 * buffer.
+	 * 
+	 * @param int contentLength
+	 * @return HashMap<String, String>
+	 * @throws IOException
+	 */
 	public HashMap<String, String> getPost(int contentLength) throws IOException {
 		HashMap<String, String> post = new HashMap<String, String>();
 		if(contentLength > 0) {
@@ -143,11 +173,17 @@ public class Communication {
 		return post;
 	}
 	
+	/**
+	 * Closes the inputstreamreader, the bufferedreader
+	 * and eventually the socket.
+	 * 
+	 * @return void
+	 * @throws IOException
+	 */
 	public void close() throws IOException {
 		// close when there is no more input
 		inputStreamReader.close();
 		bufferedReader.close();
 		socket.close();
 	}
-
 }
