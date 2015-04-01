@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+
+import nl.tbearfrobsie.dh15.webserver.exception.ForbiddenRequestException;
+import nl.tbearfrobsie.dh15.webserver.exception.InvalidRequestException;
 import nl.tbearfrobsie.dh15.webserver.util.Constant;
 import nl.tbearfrobsie.dh15.webserver.util.Logger;
 
