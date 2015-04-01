@@ -1,7 +1,6 @@
 package nl.tbearfrobsie.dh15.webserver;
 
 import java.io.IOException;
-import java.net.URLConnection;
 import nl.tbearfrobsie.dh15.webserver.util.Constant;;
 
 public class Response {
@@ -25,7 +24,7 @@ public class Response {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + Constant.URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_ERRORPAGE);
 
 		FileResource errorFile = new FileResource(fullPath);
-		sendResponseHeader(404, errorFile.getByteSize(), getContentType(errorFile));
+		sendResponseHeader(404, errorFile.getByteSize(), errorFile.getContentType());
 		comm.sendFile(errorFile);
 	}
 
@@ -38,7 +37,7 @@ public class Response {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + Constant.URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_FORBIDDENPAGE);
 
 		FileResource errorFile = new FileResource(fullPath);
-		sendResponseHeader(403, errorFile.getByteSize(), getContentType(errorFile));
+		sendResponseHeader(403, errorFile.getByteSize(), errorFile.getContentType());
 		comm.sendFile(errorFile);
 	}
 
@@ -51,25 +50,8 @@ public class Response {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + Constant.URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_BADREQUESTPAGE);
 
 		FileResource errorFile = new FileResource(fullPath);
-		sendResponseHeader(400, errorFile.getByteSize(), getContentType(errorFile));
+		sendResponseHeader(400, errorFile.getByteSize(), errorFile.getContentType());
 		comm.sendFile(errorFile);
-	}
-	
-	/**
-	 * Get content type for given file resource.
-	 * 
-	 * @param file
-	 * @return
-	 */
-	public String getContentType(FileResource file) {
-		String contentType = URLConnection.guessContentTypeFromName(file.getName());
-		
-		if(null == contentType) {
-			if(file.getName().contains(Constant.CSS_EXTENTION)) {
-				contentType = Constant.CONTENTTYPE_CSS;
-			}
-		}
-		return contentType;
 	}
 	
 	/**

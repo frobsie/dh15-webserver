@@ -117,7 +117,7 @@ public class HTTPHandler {
 		if (file.isFile()) {	        
 			// Print Headers
 			FileResource fr = new FileResource(request.getPath());
-			response.sendResponseHeader(200, fr.getByteSize(), response.getContentType(fr));
+			response.sendResponseHeader(200, fr.getByteSize(), fr.getContentType());
 
 			comm.sendFile(fr);
 			return;
