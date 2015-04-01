@@ -9,7 +9,7 @@ import java.util.Iterator;
 
 public class Request {
 	private String uri;
-	private String method;
+	private String method = "";
 	private String protocol;
 	private int contentLength = 0;
 	private String userCookieId = "";
@@ -171,6 +171,5 @@ public class Request {
 	
 	public ArrayList<String> getRawHeaders() {
 		return headers;
-	}
-	
+	}	
 }

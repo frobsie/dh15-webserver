@@ -32,11 +32,15 @@ public class HTTPHandler {
 			loginUser();
 
 			handleRequestMethod();
+			
 		} catch(InvalidRequestException e) {
 			response.plot400();
 		} catch(ForbiddenRequestException e) {
 			response.plot403();
+		} catch(IOException e) {
+			e.printStackTrace();
 		}
+		this.comm.close();
 	}
 
 	/**
@@ -87,7 +91,6 @@ public class HTTPHandler {
 		// als het een file is
 		if (file.isFile()) {	        
 			// Print Headers
-			// TODO find better solution
 			FileResource fr = new FileResource(request.getPath());
 			response.sendResponseHeader(200, fr.getByteSize(), response.getContentType(fr));
 
@@ -98,6 +101,9 @@ public class HTTPHandler {
 		switch(request.getUri()) {
 		case Constant.ADMIN_URI:
 			this.showAdmin();
+			break;
+		case Constant.SETTINGS_URI:
+			this.showSettingsForm();
 			break;
 		case Constant.URI_LOGOUT:
 			this.handleLogout();
@@ -138,15 +144,10 @@ public class HTTPHandler {
 		Logger.printLine(request.getPost().toString(),2);
 		switch(request.getUri()) {
 		case Constant.ADMIN_URI:
-			if(user.isLoggedIn()) { 	
-				if(!user.hasRole(User.ROLE_BEHEERDERS)) {
-					response.plot403();
-					return;
-				}
-				this.processConfigUpdate();
-			} else {
-				this.processLoginUser();
-			}
+			this.processLoginUser();
+			break;
+		case Constant.SETTINGS_URI:
+			this.processConfigUpdate();
 			break;
 		case Constant.URI_USER_NEW:
 			this.processNewUser();
@@ -162,10 +163,27 @@ public class HTTPHandler {
 	 * @throws IOException
 	 */
 	private void showAdmin() throws IOException {
+		if(user.isLoggedIn()) {
+			response.redirectUrl(Constant.SETTINGS_URI);
+			return;
+		}
+		String form = HtmlProvider.getLoginForm();
+		response.sendResponseHeader(200, form.length());
+
+		comm.sendLine(form);
+	}
+	
+	private void showSettingsForm() throws IOException {
+		if(!user.isLoggedIn()) {
+			response.plot403();
+			return;
+		}
+		
 		String form = HtmlProvider.getManageForm(user);
 		response.sendResponseHeader(200, form.length());
 
 		comm.sendLine(form);
+		
 	}
 	
 	/**
@@ -259,7 +277,17 @@ public class HTTPHandler {
 	}
 
 	private void processConfigUpdate() throws IOException, UpdatedConfigException {
+		if(!user.isLoggedIn() || !user.hasRole(User.ROLE_BEHEERDERS)) {
+			response.plot403();
+			return;
+		}
+		
+		boolean isPortChanged = false;
+		
 		if(request.postContains(ConfigPropertyValues.CONFIG_KEY_PORT)) {
+			if(!ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT).equals(request.getPostValue(ConfigPropertyValues.CONFIG_KEY_PORT))) {
+				isPortChanged = true;
+			}
 			ConfigPropertyValues.set(ConfigPropertyValues.CONFIG_KEY_PORT, 
 					new Integer(request.getPostValue(ConfigPropertyValues.CONFIG_KEY_PORT)).toString());
 		}
@@ -279,9 +307,14 @@ public class HTTPHandler {
 					ConfigPropertyValues.CONFIG_VALUE_STR_FALSE);
 		}
 		ConfigPropertyValues.write();
-		response.sendResponseHeader(203, 0);
-
-		throw new UpdatedConfigException();
+		
+		
+		if(isPortChanged) {
+			response.redirectUrl(Constant.LOCALHOST+Constant.URI_SPLIT_PORT+ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT)+Constant.SETTINGS_URI);
+			throw new UpdatedConfigException();
+		} else {
+			response.redirectUrl(Constant.SETTINGS_URI);
+		}
 	}
 
 	private void processLoginUser() throws IOException {
@@ -301,13 +334,18 @@ public class HTTPHandler {
 			user.generateCookieId();
 
 			msa.storeUser(user);
-			this.user = user;
+			setUser(user);
 			msa.close();
-			response.redirectUrl(Constant.ADMIN_URI);
+			response.redirectUrl(Constant.SETTINGS_URI);
 		}
 	}
 
-	private void processNewUser() {
+	private void processNewUser() throws IOException {
+		if(!user.isLoggedIn() || !user.hasRole(User.ROLE_BEHEERDERS)) {
+			response.plot403();
+			return;
+		}
+		
 		if(request.postContains(Constant.POST_USERNAME) && request.postContains(Constant.POST_PASSWORD) && request.postContains(Constant.POST_ROLE)) {
 			User user = new User(request.getPostValue(Constant.POST_USERNAME), request.getPostValue(Constant.POST_PASSWORD), request.getPostValue(Constant.POST_ROLE));
 
@@ -338,7 +376,7 @@ public class HTTPHandler {
 		//user.generateCookieId();
 
 		//msa.storeUser(user);
-		this.user = user;
+		setUser(user);
 		msa.close();
 	}
 
@@ -361,5 +399,10 @@ public class HTTPHandler {
 		retVal += System.lineSeparator();
 
 		return retVal;
+	}
+	
+	protected void setUser(User user) {
+		this.user = user;
+		this.response.setUser(user);
 	}
 }

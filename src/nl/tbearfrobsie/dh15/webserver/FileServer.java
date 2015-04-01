@@ -54,7 +54,7 @@ public class FileServer {
 				}
 			} catch (Exception e) {
 				// restart server
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 	}

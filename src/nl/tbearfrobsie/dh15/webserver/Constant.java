@@ -14,7 +14,8 @@ public abstract class Constant {
 	public static final String ERROR_CLIENT_CLOSED_CONNECTION = "Error : Client closed connection.";
 	public static final String ERROR_CLIENT_FILENOTEXISTS = "File does not exist.";
 
-	public static final String ADMIN_URI = "/adminerino";
+	public static final String ADMIN_URI = "/admin";
+	public static final String SETTINGS_URI = "/settings";
 	public static final String URI_SHOWLOG = "/showlog";
 	public static final String URI_CLEARLOGS = "/clearlogs";
 	public static final String URI_LOGOUT = "/logout";
@@ -51,10 +52,14 @@ public abstract class Constant {
 	public static final String URI_DELIMITER = "/";
 	public static final String URI_SPLIT_DELIMITER = "&";
 	public static final String URI_SPLIT_DELIMITER_VALUE = "=";
+	public static final String URI_SPLIT_PORT = ":";
+	
+	public static final String LOCALHOST = "https://localhost";
 
 	public static final String STATUSCODE_200_STR = "200 Ok";
 	public static final String STATUSCODE_203_STR = "203 No Content";
 	public static final String STATUSCODE_301_STR = "301 Moved Permanently";
+	public static final String STATUSCODE_302_STR = "302 Found";
 	public static final String STATUSCODE_307_STR = "307 Temporary Redirect";
 	public static final String STATUSCODE_400_STR = "400 Bad Request";
 	public static final String STATUSCODE_403_STR = "403 Forbidden";
@@ -63,4 +68,7 @@ public abstract class Constant {
 	public static final String POST_USERNAME = "username";
 	public static final String POST_PASSWORD = "password";
 	public static final String POST_ROLE = "role";
+	
+	public static final String CSS_EXTENTION = ".css";
+	public static final String CONTENTTYPE_CSS = "text/css";
 }

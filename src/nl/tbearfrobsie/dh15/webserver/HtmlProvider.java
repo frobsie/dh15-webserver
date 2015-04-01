@@ -20,86 +20,89 @@ public class HtmlProvider {
 		return "\n</body>\n</html>";
 	}
 
+	public static String getLoginForm() {
+		String admin = header();
+		admin += "<form method=\"post\" action=\"" +
+				Constant.ADMIN_URI +
+				"\">\n" +
+				"<table>\n" +
+				"<thead>\n" +
+				"    <tr><th>Login</th><th class=\"right\"></th></tr>\n" +
+				"</thead>\n" +
+				"<tbody>\n" +
+				"    <tr><td>Username:</td><td><input name=\"username\" value=\"\" type=\"text\"></td></tr>\n" +
+				"    <tr><td>Password:</td><td><input name=\"password\" value=\"\" type=\"password\"></td></tr>\n" +
+				"    <tr><td></td>\n" +
+				"        <td class=\"right\"><input value=\"OK\" type=\"submit\"></td>\n" +
+				"    </tr>\n" +
+				"</tbody>\n" +
+				"</table>\n" +
+				"</form>";
+		return admin + tail();
+	}
+
 	/**
 	 * Get the form the manage the server configuration
 	 * @return
 	 */
 	public static String getManageForm(User user) {
 		String admin = header();
-		if(user.isLoggedIn()) {
-			admin +=  "<form method=\"post\" action=\"" +
-					Constant.ADMIN_URI +
-					"\">\n" +
-					"<table>\n" +
-					"<thead>\n" +
-					"    <tr><th>SuperServer</th><th class=\"right\">Control Panel</th></tr>\n" +
-					"</thead>\n" +
-					"<tbody>\n" +
-					"    <tr><td>Web port:</td><td><input name=\"port\" value=\"" +
-					""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT)+"" +
-					"\" ";
-			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
-				admin += "disabled=\"disabled\"";
-			}
-			admin += "type=\"text\"></td></tr>\n" +
-					"    <tr><td>Webroot:</td><td><input name=\"docroot\" value=\"" +
-					""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT)+"" +
-					"\" ";
-			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
-				admin += "disabled=\"disabled\"";
-			}
-			admin += "type=\"text\"></td></tr>\n" +
-					"    <tr><td>Default page:</td><td><input name=\"defaultpage\" value=\"" +
-					""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE)+"" +
-					"\" ";
-			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
-				admin += "disabled=\"disabled\"";
-			}
-			admin += "type=\"text\"></td></tr>\n" +
-					"    <tr><td>Directory browsing</td><td><input name=\"directorybrowsing\" type=\"checkbox\"";
-			if(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING).equals(ConfigPropertyValues.CONFIG_VALUE_STR_TRUE)) {
-				admin += " checked=\"checked\"";
-			}
-
-			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
-				admin += "disabled=\"disabled\"";
-			}
-
-			admin += "></td></tr>\n" +
-					"    <tr><td><a href=\"" + Constant.URI_SHOWLOG + "\">Show log</a></td>\n" +
-					"        <td class=\"right\"><input value=\"OK\"";
-			if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
-				admin += "disabled=\"disabled\"";
-			}
-			admin += " type=\"submit\"></td>\n" +
-					"    </tr>\n";
-			if(user.hasRole(User.ROLE_BEHEERDERS)) {		
-				admin += "    <tr><td><a href=\"" + Constant.URI_CLEARLOGS + "\">Clear logs</a></td></tr>\n";
-				admin += "    <tr><td><a href=\"" + Constant.URI_USERS + "\">Users</a></td></tr>\n";
-			}
-
-			admin += "    <tr><td><a href=\"" + Constant.URI_LOGOUT + "\">Logout</a></td></tr>\n";
-			admin += " </tbody>\n" +
-					"</table>\n" +
-					"</form>";
-		} else {
-			admin += "<form method=\"post\" action=\"" +
-					Constant.ADMIN_URI +
-					"\">\n" +
-					"<table>\n" +
-					"<thead>\n" +
-					"    <tr><th>Login</th><th class=\"right\"></th></tr>\n" +
-					"</thead>\n" +
-					"<tbody>\n" +
-					"    <tr><td>Username:</td><td><input name=\"username\" value=\"\" type=\"text\"></td></tr>\n" +
-					"    <tr><td>Password:</td><td><input name=\"password\" value=\"\" type=\"password\"></td></tr>\n" +
-					"    <tr><td></td>\n" +
-					"        <td class=\"right\"><input value=\"OK\" type=\"submit\"></td>\n" +
-					"    </tr>\n" +
-					"</tbody>\n" +
-					"</table>\n" +
-					"</form>";
+		admin +=  "<form method=\"post\" action=\"" +
+				Constant.SETTINGS_URI +
+				"\">\n" +
+				"<table>\n" +
+				"<thead>\n" +
+				"    <tr><th>SuperServer</th><th class=\"right\">Control Panel</th></tr>\n" +
+				"</thead>\n" +
+				"<tbody>\n" +
+				"    <tr><td>Web port:</td><td><input name=\"port\" value=\"" +
+				""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT)+"" +
+				"\" ";
+		if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
+			admin += "disabled=\"disabled\"";
 		}
+		admin += "type=\"text\"></td></tr>\n" +
+				"    <tr><td>Webroot:</td><td><input name=\"docroot\" value=\"" +
+				""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT)+"" +
+				"\" ";
+		if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
+			admin += "disabled=\"disabled\"";
+		}
+		admin += "type=\"text\"></td></tr>\n" +
+				"    <tr><td>Default page:</td><td><input name=\"defaultpage\" value=\"" +
+				""+ ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DEFAULTPAGE)+"" +
+				"\" ";
+		if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
+			admin += "disabled=\"disabled\"";
+		}
+		admin += "type=\"text\"></td></tr>\n" +
+				"    <tr><td>Directory browsing</td><td><input name=\"directorybrowsing\" type=\"checkbox\"";
+		if(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DIRECTORYBROWSING).equals(ConfigPropertyValues.CONFIG_VALUE_STR_TRUE)) {
+			admin += " checked=\"checked\"";
+		}
+
+		if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
+			admin += "disabled=\"disabled\"";
+		}
+
+		admin += "></td></tr>\n" +
+				"    <tr><td><a href=\"" + Constant.URI_SHOWLOG + "\">Show log</a></td>\n" +
+				"        <td class=\"right\"><input value=\"OK\"";
+		if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
+			admin += "disabled=\"disabled\"";
+		}
+		admin += " type=\"submit\"></td>\n" +
+				"    </tr>\n";
+		if(user.hasRole(User.ROLE_BEHEERDERS)) {		
+			admin += "    <tr><td><a href=\"" + Constant.URI_CLEARLOGS + "\">Clear logs</a></td></tr>\n";
+			admin += "    <tr><td><a href=\"" + Constant.URI_USERS + "\">Users</a></td></tr>\n";
+		}
+
+		admin += "    <tr><td><a href=\"" + Constant.URI_LOGOUT + "\">Logout</a></td></tr>\n";
+		admin += " </tbody>\n" +
+				"</table>\n" +
+				"</form>";
+
 		return admin + tail();
 	}
 

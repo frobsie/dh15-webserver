@@ -56,7 +56,14 @@ public class Response {
 	 * @return
 	 */
 	public String getContentType(FileResource file) {
-		return URLConnection.guessContentTypeFromName(file.getName());
+		String contentType = URLConnection.guessContentTypeFromName(file.getName());
+		
+		if(null == contentType) {
+			if(file.getName().contains(Constant.CSS_EXTENTION)) {
+				contentType = Constant.CONTENTTYPE_CSS;
+			}
+		}
+		return contentType;
 	}
 	
 	/**
@@ -100,10 +107,13 @@ public class Response {
 		}
 		try {
 			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_HTTP + status);
+			
 			if(user.isLoggedIn()) {
 				comm.sendLine(Constant.MSG_PROTOCOL_HEADER_COOKIE + user.getCookieId() + Constant.MSG_PROTOCOL_HEADER_COOKIE_TAIL);
 			}
-			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_CONTENTTYPE + contentType);
+			if(null != contentType) {
+				comm.sendLine(Constant.MSG_PROTOCOL_HEADER_CONTENTTYPE + contentType);
+			}
 			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_CONTENTLENGTH + contentLength);
 
 			// Om "MIME-Sniffing" te voorkomen
@@ -126,13 +136,20 @@ public class Response {
 	 */
 	public void redirectUrl(String uri) {
 		try {
-			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_HTTP + Constant.STATUSCODE_307_STR);
+			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_HTTP + Constant.STATUSCODE_302_STR);
 			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_LOCATION + uri);
+			if(user.isLoggedIn()) {
+				comm.sendLine(Constant.MSG_PROTOCOL_HEADER_COOKIE + user.getCookieId() + Constant.MSG_PROTOCOL_HEADER_COOKIE_TAIL);
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
+	}
+	
+	public void setUser(User user) {
+		this.user = user;
 	}
 	
 }
