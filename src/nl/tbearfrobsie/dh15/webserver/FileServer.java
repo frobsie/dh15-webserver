@@ -39,14 +39,11 @@ public class FileServer {
 				int port = new Integer(ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT));
 				System.out.println(SERVER_STARTED + port);
 
-				// SSL even uitgezet @ testen
 				createSSLServerSocket();
-				//serverSocket = new ServerSocket(port);
 
 				while (true) {
 					// accept connections
 					SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
-					//Socket clientSocket = serverSocket.accept();
 
 					// start new thread for incoming connection
 					Thread t = new Thread(new ClientThread(new Communication(clientSocket), this));
