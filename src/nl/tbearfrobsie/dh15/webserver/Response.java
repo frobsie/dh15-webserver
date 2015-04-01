@@ -1,7 +1,8 @@
 package nl.tbearfrobsie.dh15.webserver;
 
 import java.io.IOException;
-import nl.tbearfrobsie.dh15.webserver.util.Constant;;
+
+import nl.tbearfrobsie.dh15.webserver.util.Constant;
 
 public class Response {
 	private Communication comm;
