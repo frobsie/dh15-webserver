@@ -85,6 +85,10 @@ public class HTTPHandler {
 			handlePost();
 			break;
 		default:
+		case Constant.MSG_PROTOCOL_HEAD:
+		case Constant.MSG_PROTOCOL_OPTIONS:
+		case Constant.MSG_PROTOCOL_DELETE:
+		case Constant.MSG_PROTOCOL_PUT:
 			response.plot400();
 			break;
 		}		

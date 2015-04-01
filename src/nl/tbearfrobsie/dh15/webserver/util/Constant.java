@@ -29,6 +29,11 @@ public abstract class Constant {
 
 	public static final String MSG_PROTOCOL_GET = "GET";
 	public static final String MSG_PROTOCOL_POST = "POST";
+	public static final String MSG_PROTOCOL_HEAD = "HEAD";
+	public static final String MSG_PROTOCOL_OPTIONS = "OPTIONS";
+	public static final String MSG_PROTOCOL_DELETE = "DELETE";
+	public static final String MSG_PROTOCOL_PUT = "PUT";
+	public static final String MSG_PROTOCOL_PATCH = "PATCH";
 
 	public static final String MSG_PROTOCOL_HEADER_HTTP = "HTTP/1.0 ";
 	public static final String MSG_PROTOCOL_HEADER_CONTENTTYPE = "Content-Type: ";
