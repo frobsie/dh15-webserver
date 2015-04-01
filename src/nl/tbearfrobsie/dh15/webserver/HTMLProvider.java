@@ -19,6 +19,7 @@ public class HTMLProvider {
 	/**
 	 * Generates a HTML 5 DOCTYPE,
 	 * header and body start tag.
+	 * 
 	 * @return String
 	 */
 	public static String header() {
@@ -59,7 +60,7 @@ public class HTMLProvider {
 	 * Get the form the manage the server configuration.
 	 * 
 	 * @param User user
-	 * @return
+	 * @return String
 	 */
 	public static String getManageForm(User user) {
 		String admin = header();
@@ -228,9 +229,10 @@ public class HTMLProvider {
 	}
 
 	/**
-	 * Build and send directory structure to client for the given uri
-	 * @param uri
-	 * @return
+	 * Build and send directory structure to client for the given uri.
+	 * 
+	 * @param String uri
+	 * @return String
 	 */
 	public static String listFolderContent(String uri) {
 		String path = ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_DOCROOT) + Constant.URI_DELIMITER + uri;
@@ -299,3 +301,4 @@ public class HTMLProvider {
 		return fileListingHtml;
 	}
 }
+
