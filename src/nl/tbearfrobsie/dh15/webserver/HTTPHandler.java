@@ -185,7 +185,7 @@ public class HTTPHandler {
 			// Print Headers
 			// TODO find better solution
 			FileResource fr = new FileResource(fullPath);
-			sendResponseHeader(200, fr.getByteSize(), getContentType(fr));
+			sendResponseHeader(200, fr.getByteSize(), fr.getContentType());
 
 			comm.sendFile(fr);
 			return;
@@ -308,7 +308,7 @@ public class HTTPHandler {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + Constant.URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_ERRORPAGE);
 
 		FileResource errorFile = new FileResource(fullPath);
-		sendResponseHeader(404, errorFile.getByteSize(), getContentType(errorFile));
+		sendResponseHeader(404, errorFile.getByteSize(), errorFile.getContentType());
 		comm.sendFile(errorFile);
 	}
 
@@ -322,7 +322,7 @@ public class HTTPHandler {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + Constant.URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_FORBIDDENPAGE);
 
 		FileResource errorFile = new FileResource(fullPath);
-		sendResponseHeader(403, errorFile.getByteSize(), getContentType(errorFile));
+		sendResponseHeader(403, errorFile.getByteSize(), errorFile.getContentType());
 		comm.sendFile(errorFile);
 	}
 
@@ -336,7 +336,7 @@ public class HTTPHandler {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + Constant.URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_BADREQUESTPAGE);
 
 		FileResource errorFile = new FileResource(fullPath);
-		sendResponseHeader(400, errorFile.getByteSize(), getContentType(errorFile));
+		sendResponseHeader(400, errorFile.getByteSize(), errorFile.getContentType());
 		comm.sendFile(errorFile);
 	}
 
@@ -506,20 +506,6 @@ public class HTTPHandler {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-
-	// TODO
-	// - mag naar file resource
-	/**
-	 * Get content type for given file resource.
-	 * 
-	 * @param FileResource file
-	 * @return String
-	 * @throws IOException 
-	 */
-	private String getContentType(FileResource file) throws IOException {
-		String mimeType = Files.probeContentType(file.toPath());
-		return mimeType;
 	}
 
 	/**
