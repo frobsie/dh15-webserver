@@ -1,9 +1,9 @@
 package nl.tbearfrobsie.dh15.webserver;
 
 import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+
+import nl.tbearfrobsie.dh15.webserver.util.Util;
 
 public class User {
 	private int id;
@@ -196,33 +196,6 @@ public class User {
 	 */
 	private String cryptPassword(String password) {
 		String saltstring = this.username+password+ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_SALT);
-		return hash256(saltstring);
-	}
-	
-	/**
-	 * Hashes a string with sha256.
-	 * 
-	 * @param String passwdString
-	 * @return String
-	 */
-	private String hash256(String passwdString) {
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("SHA-256");
-			md.update(passwdString.getBytes());
-	        
-	        byte[] mdbytes = md.digest();
-	 
-	        //convert the byte to hex format method 1
-	        StringBuffer sb = new StringBuffer();
-	        for (int i = 0; i < mdbytes.length; i++) {
-	          sb.append(Integer.toString((mdbytes[i] & 0xff) + 0x100, 16).substring(1));
-	        }
-	        return sb.toString();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}       
-        return null;
+		return Util.hash256(saltstring);
 	}
 }
