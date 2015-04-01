@@ -8,14 +8,22 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import nl.tbearfrobsie.dh15.webserver.exception.UpdatedConfigException;
+import nl.tbearfrobsie.dh15.webserver.util.Constant;
+import nl.tbearfrobsie.dh15.webserver.util.Logger;
+
 public class HTTPHandler {
 	
+	/** Our custom socket wrapper */
 	private Communication comm;
 	
+	/** The last statuscode sent to a client */
 	private Integer lastSentStatusCode = -1;
 	
+	/** Are client allowed to view a directory listing */
 	private Boolean directoryBrowsingAllowed;
 	
+	/** Custom user implementation */
 	private User user;
 	
 	public HTTPHandler(Communication comm) {
@@ -79,11 +87,24 @@ public class HTTPHandler {
 		Logger.append(Logger.LOG_TYPE_ACCESS_EXTENDED, createAccessLogExtendedLine(lines));
 	}
 	
+	/**
+	 * Returns a formatted log entry string
+	 * 
+	 * @param String line
+	 * @return String
+	 */
 	protected String createAccessLogLine(String line) {
 		String retVal = String.format("%s " + "\"" + line + "\"" + " %s", comm.getSocketInfo(), lastSentStatusCode);
 		return retVal;
 	}
 
+	/**
+	 * Returns a formatted log entry string
+	 * including the entire request.
+	 * 
+	 * @param List<String> lines
+	 * @return String
+	 */
 	protected String createAccessLogExtendedLine(List<String> lines) {
 		String retVal = Constant.EMPTY_STR; 
 
@@ -99,12 +120,15 @@ public class HTTPHandler {
 		return retVal;
 	}
 
+	// TODO
+	// - uri verwerking moet los
 	/**
 	 * Temporary GET handler
 	 * 
-	 * @param uri
-	 * @param protocol
+	 * @param String uri
+	 * @param String protocol
 	 * @throws IOException
+	 * @return void
 	 */
 	private void handleGet(String uri, String protocol) throws IOException {		
 		// if ask for root get default page (TODO accept multiple defaults)
@@ -129,7 +153,7 @@ public class HTTPHandler {
 		// Als we directories mogen listen
 		// en de opgevraagde resource is een map
 		if (directoryBrowsingAllowed && file.isDirectory()) {        	
-			String folderContent = HtmlProvider.listFolderContent(uri); 
+			String folderContent = HTMLProvider.listFolderContent(uri); 
 			sendResponseHeader(200, folderContent.length());
 
 			comm.sendLine(folderContent);
@@ -152,7 +176,7 @@ public class HTTPHandler {
 		// TODO
 		// Dit moet anders 
 		if(uri.equals(Constant.ADMIN_URI)) {
-			String form = HtmlProvider.getManageForm(user);
+			String form = HTMLProvider.getManageForm(user);
 			sendResponseHeader(200, form.length());
 
 			comm.sendLine(form);
@@ -176,7 +200,7 @@ public class HTTPHandler {
 				plot403();
 				return;
 			}
-			String log = HtmlProvider.getLog();
+			String log = HTMLProvider.getLog();
 			sendResponseHeader(200, log.length());
 			comm.sendLine(log);
 			return;
@@ -199,7 +223,7 @@ public class HTTPHandler {
 				plot403();
 				return;
 			}
-			String users = HtmlProvider.listUserContent();
+			String users = HTMLProvider.listUserContent();
 			sendResponseHeader(200, users.length());
 			comm.sendLine(users);
 			return;
@@ -211,7 +235,7 @@ public class HTTPHandler {
 				plot403();
 				return;
 			}
-			String userForm = HtmlProvider.getNewUserForm();
+			String userForm = HTMLProvider.getNewUserForm();
 			sendResponseHeader(200, userForm.length());
 			comm.sendLine(userForm);
 			return;
@@ -238,7 +262,9 @@ public class HTTPHandler {
 	}
 
 	/**
-	 * Collect the default page from the config and check if one of the options exists.
+	 * Collect the default page from the config 
+	 * and check if one of the options exists.
+	 * 
 	 * @return String 
 	 */
 	protected String getDefaultpageUri() {
@@ -253,8 +279,10 @@ public class HTTPHandler {
 	}
 
 	/**
-	 * send 404 page to the user.
+	 * Send 404 page to the user.
+	 * 
 	 * @throws IOException
+	 * @return void
 	 */
 	protected void plot404() throws IOException {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + Constant.URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_ERRORPAGE);
@@ -265,8 +293,10 @@ public class HTTPHandler {
 	}
 
 	/**
-	 * send 403 page to the user.
+	 * Send 403 page to the user.
+	 * 
 	 * @throws IOException
+	 * @return void
 	 */
 	protected void plot403() throws IOException {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + Constant.URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_FORBIDDENPAGE);
@@ -277,8 +307,10 @@ public class HTTPHandler {
 	}
 
 	/**
-	 * send 400 page to the user.
+	 * Send 400 page to the user.
+	 * 
 	 * @throws IOException
+	 * @return void
 	 */
 	protected void plot400() throws IOException {
 		String fullPath =  ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_STATUSROOT) + Constant.URI_DELIMITER + ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_BADREQUESTPAGE);
@@ -289,12 +321,14 @@ public class HTTPHandler {
 	}
 
 	/**
-	 * Handle POST requests 
-	 * @param uri
-	 * @param protocol
-	 * @param contentLength
+	 * Handle POST requests
+	 *  
+	 * @param String uri
+	 * @param String protocol
+	 * @param int contentLength
 	 * @throws IOException
 	 * @throws Exception
+	 * @return void
 	 */
 	protected void handlePost(String uri, String protocol, int contentLength) throws IOException, Exception {
 		Logger.printLine(uri,2);
@@ -368,30 +402,32 @@ public class HTTPHandler {
 				return;
 			}
 		}
-
 	}
 
-	
-
 	/**
-	 * send response headers to the client
-	 * @param statusCode
-	 * @param contentLength
+	 * Send response headers to the client.
+	 * 
+	 * @param int statusCode
+	 * @param int contentLength
+	 * @return void
 	 */
 	private void sendResponseHeader(int statusCode, int contentLength){
 		sendResponseHeader(statusCode, contentLength, Constant.MSG_PROTOCOL_DEFAULTMIMETYPE);
-
 	}
 
 	/**
-	 * send response headers to the client
-	 * @param statusCode
-	 * @param contentLength
-	 * @param contentType
+	 * Send response headers to the client.
+	 * 
+	 * @param int statusCode
+	 * @param int contentLength
+	 * @param String contentType
+	 * @return void
 	 */
 	private void sendResponseHeader(int statusCode, int contentLength, String contentType) {
 		String status = null;
 
+		// TODO
+		// - naar enum
 		switch(statusCode) {
 		case 200:
 			status = Constant.STATUSCODE_200_STR;
@@ -412,6 +448,7 @@ public class HTTPHandler {
 			status = Constant.STATUSCODE_404_STR;
 			break;
 		}
+		
 		try {
 			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_HTTP + status);
 			if(user.isLoggedIn()) {
@@ -435,6 +472,12 @@ public class HTTPHandler {
 		}
 	}
 
+	/**
+	 * Redirects a client.
+	 * 
+	 * @param String uri
+	 * @return void
+	 */
 	private void redirectUrl(String uri) {
 		try {
 			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_HTTP + Constant.STATUSCODE_307_STR);
@@ -443,18 +486,26 @@ public class HTTPHandler {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
 	}
 
+	// TODO
+	// - mag naar file resource
 	/**
 	 * Get content type for given file resource.
-	 * @param file
-	 * @return
+	 * 
+	 * @param FileResource file
+	 * @return String
 	 */
 	private String getContentType(FileResource file) {
 		return URLConnection.guessContentTypeFromName(file.getName());
 	}
 
+	/**
+	 * Tries to log in a user.
+	 * 
+	 * @param ArrayList<String> lines
+	 * @return void
+	 */
 	private void tryUserLogin(ArrayList<String> lines) {
 		String cookie = "";
 		for(int i = 0; i < lines.size(); i++) {

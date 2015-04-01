@@ -1,4 +1,4 @@
-package nl.tbearfrobsie.dh15.webserver;
+package nl.tbearfrobsie.dh15.webserver.util;
 
 public class Constant {
 	public static Integer BUFFERSIZE = 128;

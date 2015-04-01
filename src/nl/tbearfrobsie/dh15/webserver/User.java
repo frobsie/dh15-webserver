@@ -18,15 +18,17 @@ public class User {
 	public static String ROLE_BEHEERDERS = "beheerders";
 	public static String ROLE_ONDERSTEUNERS = "ondersteuners";
 	
+	/** Random needed for cookie id generation */
 	private SecureRandom random = new SecureRandom();
 	
 	/**
 	 * Existing user constructor
-	 * @param id
-	 * @param username
-	 * @param password
-	 * @param role
-	 * @param cookieId
+	 * 
+	 * @param int id
+	 * @param String username
+	 * @param String password
+	 * @param String role
+	 * @param String cookieId
 	 */
 	public User(int id, String username, String password, String role, String cookieId) {
 		this.id = id;
@@ -38,9 +40,10 @@ public class User {
 	
 	/**
 	 * New User constructor 
-	 * @param username
-	 * @param password
-	 * @param role
+	 * 
+	 * @param String username
+	 * @param String password
+	 * @param String role
 	 */
 	public User(String username, String password, String role) {
 		this.username = username;
@@ -48,27 +51,57 @@ public class User {
 		this.role = role;
 	}
 	
+	/**
+	 * Default constructor.
+	 */
 	public User() {
 		this.loggedIn = false;
 		this.anonymous = true;
 	}
 	
+	/**
+	 * Returns the id of the user.
+	 * 
+	 * @return int
+	 */
 	public int getId() {
 		return this.id;
 	}
 	
+	/**
+	 * Returns the username.
+	 * 
+	 * @return String
+	 */
 	public String getUsername() {
 		return this.username;
 	}
 	
+	/**
+	 * Returns the password.
+	 * 
+	 * @return String
+	 */
 	public String getPassword() {
 		return this.password;
 	}
 	
+	/**
+	 * Returns the role.
+	 * 
+	 * @return String
+	 */
 	public String getRole() {
 		return this.role;
 	}
 	
+	/**
+	 * Checks if this user has
+	 * a given role.
+	 * 
+	 * @param String role
+	 * @return boolean
+	 */
 	public boolean hasRole(String role) {
 		if(this.role.equals(role)) {
 			return true;
@@ -76,10 +109,23 @@ public class User {
 		return false;
 	}
 	
+	/**
+	 * Returns the cookie id.
+	 * 
+	 * @return String
+	 */
 	public String getCookieId() {
 		return this.cookieId;
 	}
 	
+	/**
+	 * Checks if a given password
+	 * matches the password of the
+	 * current user object.
+	 * 
+	 * @param String passwordToCheck
+	 * @return boolean
+	 */
 	public boolean checkPassword(String passwordToCheck) {
 		String passwd = cryptPassword(passwordToCheck);
 		if(password.equals(passwd)) {
@@ -88,10 +134,22 @@ public class User {
 		return false;
 	}
 	
+	/**
+	 * Sets a new password.
+	 * 
+	 * @param password
+	 * @return void
+	 */
 	private void setPassword(String password) {
 		this.password = cryptPassword(password);
 	}
 	
+	/**
+	 * Checks if the current user is 
+	 * logged in.
+	 * 
+	 * @return boolean
+	 */
 	public boolean isLoggedIn() {
 		if(this.loggedIn && !this.anonymous) {
 			return true;
@@ -99,27 +157,55 @@ public class User {
 		return false;
 	}
 	
+	/**
+	 * Sets the current user loggedin (or not).
+	 * 
+	 * @param boolean loggedin
+	 * @return void
+	 */
 	public void setLoggedIn(boolean loggedin) {
 		this.loggedIn = loggedin;
 	}
 	
+	/**
+	 * Generates a new cookie id.
+	 * 
+	 * @return String
+	 */
 	public String generateCookieId() {
 		this.cookieId = new BigInteger(130, random).toString(32);
 		return this.getCookieId();
 	}
 	
+	/**
+	 * Unsets the curent user's cookie id.
+	 * 
+	 * @return void
+	 */
 	public void destroyCookieId() {
 		this.cookieId = null;
 	}
 	
+	// TODO move cryptPassword & hash256 to util
+	/**
+	 * Hashes a given password string
+	 * with sha256 and an added salt.
+	 * 
+	 * @param String password
+	 * @return String
+	 */
 	private String cryptPassword(String password) {
 		String saltstring = this.username+password+ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_SALT);
 		return hash256(saltstring);
 	}
 	
-	private String hash256(String passwdString)
-	{
-		
+	/**
+	 * Hashes a string with sha256.
+	 * 
+	 * @param String passwdString
+	 * @return String
+	 */
+	private String hash256(String passwdString) {
 		MessageDigest md;
 		try {
 			md = MessageDigest.getInstance("SHA-256");
