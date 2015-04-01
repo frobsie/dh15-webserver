@@ -135,6 +135,7 @@ public class Response {
 			if(user.isLoggedIn()) {
 				comm.sendLine(Constant.MSG_PROTOCOL_HEADER_COOKIE + user.getCookieId() + Constant.MSG_PROTOCOL_HEADER_COOKIE_TAIL);
 			}
+			comm.sendLine("");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -73,6 +73,10 @@ public class HTTPHandler {
 	 * @return void
 	 */
 	protected void handleRequestMethod() throws IOException, Exception {
+		if(request.getMethod().isEmpty()) {
+			return;
+		}
+		
 		switch(request.getMethod()) {
 		case Constant.MSG_PROTOCOL_GET:
 			handleGet();
@@ -362,6 +366,7 @@ public class HTTPHandler {
 	 */
 	private void processLoginUser() throws IOException {
 		if(request.postContains(Constant.POST_USERNAME) && request.postContains(Constant.POST_PASSWORD)) {
+			
 			MySQLAccess msa = new MySQLAccess();
 			User user = msa.readUser(request.getPostValue(Constant.POST_USERNAME));
 			if(null == user) {
