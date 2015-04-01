@@ -2,7 +2,7 @@ package nl.tbearfrobsie.dh15.webserver;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URLConnection;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -515,9 +515,11 @@ public class HTTPHandler {
 	 * 
 	 * @param FileResource file
 	 * @return String
+	 * @throws IOException 
 	 */
-	private String getContentType(FileResource file) {
-		return URLConnection.guessContentTypeFromName(file.getName());
+	private String getContentType(FileResource file) throws IOException {
+		String mimeType = Files.probeContentType(file.toPath());
+		return mimeType;
 	}
 
 	/**
