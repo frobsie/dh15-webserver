@@ -257,7 +257,7 @@ public class HTTPHandler {
 			response.plot403();
 			return;
 		}
-		String log = HTMLProvider.getLog();
+		String log = HTMLProvider.getLog(user);
 		response.sendResponseHeader(200, log.length());
 		comm.sendLine(log);
 	}
@@ -271,7 +271,7 @@ public class HTTPHandler {
 			response.plot403();
 			return;
 		}
-		String cleared = Constant.MSG_LOGS_CLEARED;
+		String cleared = HTMLProvider.clearLogs(user);
 		Logger.clearLogFiles();
 		response.sendResponseHeader(200, cleared.length());
 		comm.sendLine(cleared);
@@ -286,7 +286,7 @@ public class HTTPHandler {
 			response.plot403();
 			return;
 		}
-		String users = HTMLProvider.listUserContent();
+		String users = HTMLProvider.listUserContent(user);
 		response.sendResponseHeader(200, users.length());
 		comm.sendLine(users);
 	}
@@ -366,7 +366,7 @@ public class HTTPHandler {
 		if(isPortChanged) {
 			response.redirectUrl(Constant.PROTOCOL+this.comm.getSocketIP()+Constant.URI_SPLIT_PORT+ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT)+Constant.SETTINGS_URI);
 			throw new UpdatedConfigException();
-		} else {
+		} else { 
 			response.redirectUrl(Constant.SETTINGS_URI);
 		}
 	}
@@ -434,7 +434,7 @@ public class HTTPHandler {
 			this.user.generateCookieId();
 			setUser(this.user);
 			return;
-		} else {
+		} else { 
 			user.setCookieId(request.getUserCookieId());
 			setUser(this.user);
 		}
