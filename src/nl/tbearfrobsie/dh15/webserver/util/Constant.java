@@ -78,4 +78,11 @@ public abstract class Constant {
 	
 	public static final String CSS_EXTENTION = ".css";
 	public static final String CONTENTTYPE_CSS = "text/css";
+	
+	public static final String SQL_READUSER = "SELECT * FROM user WHERE username = ? ;";
+	public static final String SQL_READUSERBYCOOKIE = "SELECT * FROM user WHERE cookieId = ? ;";
+	public static final String SQL_DELETEUSER = "DELETE FROM user WHERE id = ? ;";
+	public static final String SQL_READALLUSERS = "SELECT * FROM user;";
+	public static final String SQL_UPDATEUSER = "UPDATE user SET cookieId = ? WHERE id = ?;";
+	public static final String SQL_CREATEUSER = "INSERT INTO user (username, password, role) VALUES (?,?,?);";
 }
