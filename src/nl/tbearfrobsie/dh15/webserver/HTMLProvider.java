@@ -22,17 +22,105 @@ public class HTMLProvider {
 	 * 
 	 * @return String
 	 */
-	public static String header() {
-		return "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\" />\n</head>\n<body>\n";
+	public static String header(User user) {
+		String returnHtml =  "<!DOCTYPE html>\n"
+				+ "<html>\n"
+				+ "<head>\n"
+				+ "<meta charset=\"UTF-8\" />\n"
+				+ "<link href=\"/bootstrap.min.css\" rel=\"stylesheet\">"
+				+ "<link href=\"/dashboard.css\" rel=\"stylesheet\">"
+				+ "</head>\n"
+				+ "<body>\n"
+				+ "<nav class=\"navbar navbar-inverse navbar-fixed-top\">"
+				+ "<div class=\"container-fluid\">"
+				+ "<div class=\"navbar-header\">"
+				+ "<button type=\"button\" class=\"navbar-toggle collapsed\" data-toggle=\"collapse\" data-target=\"#navbar\" aria-expanded=\"false\" aria-controls=\"navbar\">"
+				+ "<span class=\"sr-only\">Toggle navigation</span>"
+				+ "<span class=\"icon-bar\"></span>"
+				+ "<span class=\"icon-bar\"></span>"
+				+ "<span class=\"icon-bar\"></span>"
+				+ "</button>"
+				+ "<a class=\"navbar-brand\" href=\"" + Constant.ADMIN_URI + "\">IDH15 Admin</a>"
+				+ "</div>"
+				+ "<div id=\"navbar\" class=\"navbar-collapse collapse\">"
+				+ "</div>"
+				+ "</div>"
+				+ "</nav>"
+				+ "<div class=\"container-fluid\">"
+				+ "<div class=\"row\">"
+				+ "<div class=\"col-sm-3 col-md-2 sidebar\">"
+				+ "<ul class=\"nav nav-sidebar\">"
+				+ "<li><a href=\"" + Constant.SETTINGS_URI + "\">Settings</a></li>"
+				+ "<li><a href=\"" + Constant.URI_SHOWLOG + "\">Show log</a></li>";
+		
+		if(user.hasRole(User.ROLE_BEHEERDERS)) {		
+			returnHtml += "<li><a href=\"" + Constant.URI_CLEARLOGS + "\">Clear logs</a></li>"
+					+ "<li><a href=\"" + Constant.URI_USERS + "\">Show users</a></li>";
+		}
+		
+		returnHtml += "<li><a href=\"" + Constant.URI_LOGOUT + "\">Log out</a></li>"
+				+ "</ul>"
+				+ "</div>"
+				+ "<div class=\"col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main\">";
+
+		return returnHtml;
 	}
 	
+	/**
+	 * Generates a HTML 5 DOCTYPE,
+	 * header and body start tag.
+	 * 
+	 * @return String
+	 */
+	public static String header() {
+		String returnHtml =  "<!DOCTYPE html>\n"
+				+ "<html>\n"
+				+ "<head>\n"
+				+ "<meta charset=\"UTF-8\" />\n"
+				+ "<link href=\"/bootstrap.min.css\" rel=\"stylesheet\">"
+				+ "<link href=\"/dashboard.css\" rel=\"stylesheet\">"
+				+ "</head>\n"
+				+ "<body>\n"
+				+ "<nav class=\"navbar navbar-inverse navbar-fixed-top\">"
+				+ "<div class=\"container-fluid\">"
+				+ "<div class=\"navbar-header\">"
+				+ "<button type=\"button\" class=\"navbar-toggle collapsed\" data-toggle=\"collapse\" data-target=\"#navbar\" aria-expanded=\"false\" aria-controls=\"navbar\">"
+				+ "<span class=\"sr-only\">Toggle navigation</span>"
+				+ "<span class=\"icon-bar\"></span>"
+				+ "<span class=\"icon-bar\"></span>"
+				+ "<span class=\"icon-bar\"></span>"
+				+ "</button>"
+				+ "<a class=\"navbar-brand\" href=\"" + Constant.ADMIN_URI + "\">IDH15 Admin</a>"
+				+ "</div>"
+				+ "<div id=\"navbar\" class=\"navbar-collapse collapse\">"
+				+ "</div>"
+				+ "</div>"
+				+ "</nav>"
+				+ "<div class=\"container-fluid\">"
+				+ "<div class=\"row\">"
+				+ "<div class=\"col-sm-3 col-md-2 sidebar\">"
+				+ "</div>"
+				+ "<div class=\"col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main\">";
+
+		return returnHtml;
+	}
+	
+	public static String clearLogs(User user)
+	{
+		String returnHtml = HTMLProvider.header(user);
+		returnHtml += Constant.MSG_LOGS_CLEARED;
+		returnHtml += HTMLProvider.tail();
+		
+		return returnHtml;
+	}
+
 	/**
 	 * Closes the body and html tag.
 	 *  
 	 * @return String
 	 */
 	public static String tail() {
-		return "\n</body>\n</html>";
+		return "\n</div></body>\n</html>";
 	}
 
 	/**
@@ -69,7 +157,7 @@ public class HTMLProvider {
 	 * @return String
 	 */
 	public static String getManageForm(User user) {
-		String admin = header();
+		String admin = header(user);
 		admin +=  "<form method=\"post\" action=\"" +
 				Constant.SETTINGS_URI +
 				"\">\n" +
@@ -109,19 +197,14 @@ public class HTMLProvider {
 		}
 
 		admin += "></td></tr>\n" +
-				"    <tr><td><a href=\"" + Constant.URI_SHOWLOG + "\">Show log</a></td>\n" +
+				"    <tr><td></td>\n" +
 				"        <td class=\"right\"><input value=\"OK\"";
 		if(user.hasRole(User.ROLE_ONDERSTEUNERS)) {
 			admin += "disabled=\"disabled\"";
 		}
 		admin += " type=\"submit\"></td>\n" +
 				"    </tr>\n";
-		if(user.hasRole(User.ROLE_BEHEERDERS)) {		
-			admin += "    <tr><td><a href=\"" + Constant.URI_CLEARLOGS + "\">Clear logs</a></td></tr>\n";
-			admin += "    <tr><td><a href=\"" + Constant.URI_USERS + "\">Users</a></td></tr>\n";
-		}
-
-		admin += "    <tr><td><a href=\"" + Constant.URI_LOGOUT + "\">Logout</a></td></tr>\n";
+		
 		admin += addCsrfField(user);
 		admin += " </tbody>\n" +
 				"</table>\n" +
@@ -137,7 +220,7 @@ public class HTMLProvider {
 	 * @return String
 	 */
 	public static String getNewUserForm(User user) {
-		return header() + "<form method=\"post\" action=\"" +
+		return header(user) + "<form method=\"post\" action=\"" +
 				Constant.URI_USER_NEW +
 				"\">\n" +
 				"<table>\n" +
@@ -163,13 +246,13 @@ public class HTMLProvider {
 	 * 
 	 * @return String
 	 */
-	public static String listUserContent() {
+	public static String listUserContent(User currentUser) {
 		MySQLAccess msa = new MySQLAccess();
 		ArrayList<User> users = msa.readUsers();
 
 		msa.close();
 
-		String usertabel =  header() + "<a href=\""+Constant.URI_USER_NEW+"\">Gebruiker toevoegen</a>"
+		String usertabel =  header(currentUser) + "<a href=\""+Constant.URI_USER_NEW+"\">Gebruiker toevoegen</a>"
 				+ "<table>"
 				+ "<tr>"
 				+ "<td>"
@@ -215,8 +298,8 @@ public class HTMLProvider {
 	 * @return String
 	 * @throws IOException
 	 */
-	public static String getLog() throws IOException {
-		String retVal = header() + "<table>"
+	public static String getLog(User currentUser) throws IOException {
+		String retVal = header(currentUser) + "<table>"
 				+ "<tbody>";
 
 		FileInputStream fstream = new FileInputStream(Logger.LOG_FILE_ACCESS_EXTENDED);
@@ -308,12 +391,12 @@ public class HTMLProvider {
 
 		return fileListingHtml;
 	}
-	
+
 	private static String addCsrfField(User user) {
 		MySQLAccess msa = new MySQLAccess();
 		String token = msa.createToken(user.getCookieId());
 		msa.close();
-		
+
 		return "<input type=\"hidden\" name=\"csrf\" value=\""+token+"\" />";
 	}
 }
