@@ -41,6 +41,8 @@ public abstract class Constant {
 	public static final String MSG_PROTOCOL_HEADER_LOCATION = "Location: ";
 	public static final String MSG_PROTOCOL_HEADER_NOSNIFF = "X-Content-Type-Options: nosniff";
 	public static final String MSG_PROTOCOL_HEADER_CLICKJACK = "X-Frame-Options: deny";
+	public static final String MSG_PROTOCOL_HEADER_PRAGMA = "Pragma: no-cache";
+	public static final String MSG_PROTOCOL_HEADER_NOCACHE = "Cache-control: no-cache, no-store, must-revalidate, private";
 	public static final String COOKIENAME = "UserCookieId";
 	public static final String MSG_PROTOCOL_HEADER_COOKIE = "Set-Cookie: "+COOKIENAME+"=";
 	public static final String MSG_PROTOCOL_HEADER_COOKIE_TAIL = "; Path=/;";

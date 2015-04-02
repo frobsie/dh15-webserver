@@ -49,8 +49,8 @@ public class HTTPHandler {
 	 */
 	public void handle() throws IOException, Exception {
 		try{
-			request = new Request(comm);
 			response = new Response(this.comm, this.user, this);
+			request = new Request(comm);
 			loginUser();
 
 			handleRequestMethod();
@@ -58,7 +58,7 @@ public class HTTPHandler {
 		} catch(InvalidRequestException e) {
 			response.plot400();
 		} catch(ForbiddenRequestException e) {
-			response.plot403();
+			response.plot403();	
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
@@ -389,6 +389,8 @@ public class HTTPHandler {
 			setUser(user);
 			msa.close();
 			response.redirectUrl(Constant.SETTINGS_URI);
+		} else {
+			response.plot403();
 		}
 	}
 
@@ -446,8 +448,12 @@ public class HTTPHandler {
 	 * @param String line
 	 * @return String
 	 */
-	protected String createAccessLogLine() {
-		String retVal = String.format("%s " + "\"" + request.getLogLine() + "\"" + " %s", comm.getSocketInfo(), response.lastSentStatusCode);
+	protected String createAccessLogLine() {		
+		String retVal = "";
+		retVal += comm.getSocketInfo() + " ";
+		retVal += "\"" + request.getLogLine() + "\" ";
+		retVal += response.lastSentStatusCode;
+		
 		return retVal;
 	}
 
@@ -466,8 +472,10 @@ public class HTTPHandler {
 			String line = it.next();
 			retVal += line + System.lineSeparator();
 		}
-
-		retVal = String.format("%s %s " + "\"" + retVal + "\"", comm.getSocketInfo(), response.lastSentStatusCode);
+		
+		retVal += comm.getSocketInfo() + " ";
+		retVal += "\"" + request.getLogLine() + "\" ";
+		retVal += response.lastSentStatusCode;
 		retVal += System.lineSeparator();
 
 		return retVal;

@@ -35,6 +35,11 @@ public class HTMLProvider {
 		return "\n</body>\n</html>";
 	}
 
+	/**
+	 * Outputs the login form.
+	 * 
+	 * @return String
+	 */
 	public static String getLoginForm() {
 		String admin = header();
 		admin += "<form method=\"post\" action=\"" +
@@ -46,7 +51,7 @@ public class HTMLProvider {
 				"</thead>\n" +
 				"<tbody>\n" +
 				"    <tr><td>Username:</td><td><input name=\"username\" value=\"\" type=\"text\"></td></tr>\n" +
-				"    <tr><td>Password:</td><td><input name=\"password\" value=\"\" type=\"password\"></td></tr>\n" +
+				"    <tr><td>Password:</td><td><input name=\"password\" value=\"\" type=\"password\" autocomplete=\"off\"></td></tr>\n" +
 				"    <tr><td></td>\n" +
 				"        <td class=\"right\"><input value=\"OK\" type=\"submit\"></td>\n" +
 				"    </tr>\n" +
@@ -139,7 +144,7 @@ public class HTMLProvider {
 				"</thead>\n" +
 				"<tbody>\n" +
 				"    <tr><td>Username:</td><td><input name=\"username\" value=\"\" type=\"text\"></td></tr>\n" +
-				"    <tr><td>Password:</td><td><input name=\"password\" value=\"\" type=\"password\"></td></tr>\n" +
+				"    <tr><td>Password:</td><td><input name=\"password\" value=\"\" type=\"password\" autocomplete=\"off\"></td></tr>\n" +
 				"	 <tr><td>Role: </td><td><select name=\"role\"><option value=\""+User.ROLE_BEHEERDERS+"\">"+User.ROLE_BEHEERDERS+"</option><option value=\""+User.ROLE_ONDERSTEUNERS+"\">"+User.ROLE_ONDERSTEUNERS+"</option></select>\n" +
 				"    <tr><td></td>\n" +
 				"        <td class=\"right\"><input value=\"Opslaan\" type=\"submit\"></td>\n" +

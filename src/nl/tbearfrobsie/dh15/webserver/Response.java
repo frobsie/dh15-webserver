@@ -113,6 +113,10 @@ public class Response {
 
 			// Om "Clickjacking" te voorkomen
 			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_CLICKJACK);
+			
+			// Cache control & No-cache
+			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_NOCACHE);
+			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_PRAGMA);
 
 			comm.sendLine(Constant.EMPTY_STR);
 
