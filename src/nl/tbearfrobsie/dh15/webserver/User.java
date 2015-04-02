@@ -186,6 +186,10 @@ public class User {
 		this.cookieId = null;
 	}
 	
+	public void setCookieId(String cookie) {
+		this.cookieId = cookie;
+	}
+	
 	// TODO move cryptPassword & hash256 to util
 	/**
 	 * Hashes a given password string
