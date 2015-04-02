@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import nl.tbearfrobsie.dh15.webserver.util.Constant;
+
 public class MySQLAccess {
 	
 	/** Socket instance */
@@ -54,7 +56,7 @@ public class MySQLAccess {
 	 */
 	public User readUser(String username) {
 		try {
-			preparedStatement = connect.prepareStatement("SELECT * FROM user WHERE username = ? ;");
+			preparedStatement = connect.prepareStatement(Constant.SQL_READUSER);
 			preparedStatement.setString(1, username);
 			resultSet = preparedStatement.executeQuery();
 			if(resultSet.next()){
@@ -77,7 +79,7 @@ public class MySQLAccess {
 	 */
 	public User readUserByCookie(String cookie) {
 		try {
-			preparedStatement = connect.prepareStatement("SELECT * FROM user WHERE cookieId = ? ;");
+			preparedStatement = connect.prepareStatement(Constant.SQL_READUSERBYCOOKIE);
 			preparedStatement.setString(1, cookie);
 			resultSet = preparedStatement.executeQuery();
 			if(resultSet.next()){
@@ -100,7 +102,7 @@ public class MySQLAccess {
 	 */
 	public void deleteUser(int id) {
 		try {
-			preparedStatement = connect.prepareStatement("DELETE FROM user WHERE id = ? ;");
+			preparedStatement = connect.prepareStatement(Constant.SQL_DELETEUSER);
 			preparedStatement.setInt(1, id);
 			preparedStatement.executeUpdate();
 		} catch (Exception e) {
@@ -116,7 +118,7 @@ public class MySQLAccess {
 	 */
 	public ArrayList<User> readUsers() {
 		try {
-			preparedStatement = connect.prepareStatement("SELECT * FROM user;");
+			preparedStatement = connect.prepareStatement(Constant.SQL_READALLUSERS);
 			resultSet = preparedStatement.executeQuery();
 			ArrayList<User> users = new ArrayList<User>();
 			while(resultSet.next()) {
@@ -137,7 +139,7 @@ public class MySQLAccess {
 	 */
 	public void storeUser(User user) {
 		try {
-			preparedStatement = connect.prepareStatement("UPDATE user SET cookieId = ? WHERE id = ?;");
+			preparedStatement = connect.prepareStatement(Constant.SQL_UPDATEUSER);
 			preparedStatement.setString(1, user.getCookieId());
 			preparedStatement.setInt(2, user.getId());
 			preparedStatement.executeUpdate();
@@ -154,7 +156,7 @@ public class MySQLAccess {
 	 */
 	public void createUser(User user) {
 		try {
-			preparedStatement = connect.prepareStatement("INSERT INTO user (username, password, role) VALUES (?,?,?);");
+			preparedStatement = connect.prepareStatement(Constant.SQL_CREATEUSER);
 			preparedStatement.setString(1, user.getUsername());
 			preparedStatement.setString(2, user.getPassword());
 			preparedStatement.setString(3, user.getRole());
