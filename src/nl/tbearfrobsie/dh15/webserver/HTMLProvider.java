@@ -40,7 +40,7 @@ public class HTMLProvider {
 	 * 
 	 * @return String
 	 */
-	public static String getLoginForm() {
+	public static String getLoginForm(User user) {
 		String admin = header();
 		admin += "<form method=\"post\" action=\"" +
 				Constant.ADMIN_URI +
@@ -54,7 +54,8 @@ public class HTMLProvider {
 				"    <tr><td>Password:</td><td><input name=\"password\" value=\"\" type=\"password\" autocomplete=\"off\"></td></tr>\n" +
 				"    <tr><td></td>\n" +
 				"        <td class=\"right\"><input value=\"OK\" type=\"submit\"></td>\n" +
-				"    </tr>\n" +
+				"    </tr>\n" + 
+				addCsrfField(user) +
 				"</tbody>\n" +
 				"</table>\n" +
 				"</form>";
@@ -121,6 +122,7 @@ public class HTMLProvider {
 		}
 
 		admin += "    <tr><td><a href=\"" + Constant.URI_LOGOUT + "\">Logout</a></td></tr>\n";
+		admin += addCsrfField(user);
 		admin += " </tbody>\n" +
 				"</table>\n" +
 				"</form>";
@@ -134,7 +136,7 @@ public class HTMLProvider {
 	 * 
 	 * @return String
 	 */
-	public static String getNewUserForm() {
+	public static String getNewUserForm(User user) {
 		return header() + "<form method=\"post\" action=\"" +
 				Constant.URI_USER_NEW +
 				"\">\n" +
@@ -149,6 +151,7 @@ public class HTMLProvider {
 				"    <tr><td></td>\n" +
 				"        <td class=\"right\"><input value=\"Opslaan\" type=\"submit\"></td>\n" +
 				"    </tr>\n" +
+				addCsrfField(user) +
 				"</tbody>\n" +
 				"</table>\n" +
 				"</form>" + tail();
@@ -304,6 +307,14 @@ public class HTMLProvider {
 		fileListingHtml += "</table>";
 
 		return fileListingHtml;
+	}
+	
+	private static String addCsrfField(User user) {
+		MySQLAccess msa = new MySQLAccess();
+		String token = msa.createToken(user.getCookieId());
+		msa.close();
+		
+		return "<input type=\"hidden\" name=\"csrf\" value=\""+token+"\" />";
 	}
 }
 

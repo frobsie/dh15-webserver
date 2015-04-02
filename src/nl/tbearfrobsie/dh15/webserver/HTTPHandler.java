@@ -178,6 +178,13 @@ public class HTTPHandler {
 	 */
 	protected void handlePost() throws IOException, Exception, UpdatedConfigException {
 		Logger.printLine(request.getPost().toString(),2);
+		
+		if(!checkCsrf()){
+			Logger.printLine(Constant.CSRF_ERROR, 0);
+			response.plot403();
+			return;
+		}
+		
 		switch(request.getUri()) {
 		case Constant.ADMIN_URI:
 			this.processLoginUser();
@@ -203,7 +210,7 @@ public class HTTPHandler {
 			response.redirectUrl(Constant.SETTINGS_URI);
 			return;
 		}
-		String form = HTMLProvider.getLoginForm();
+		String form = HTMLProvider.getLoginForm(user);
 		response.sendResponseHeader(200, form.length());
 
 		comm.sendLine(form);
@@ -294,7 +301,7 @@ public class HTTPHandler {
 			return;
 		}
 
-		String userForm = HTMLProvider.getNewUserForm();
+		String userForm = HTMLProvider.getNewUserForm(user);
 		response.sendResponseHeader(200, userForm.length());
 		comm.sendLine(userForm);
 	}
@@ -424,7 +431,12 @@ public class HTTPHandler {
 	 */
 	private void loginUser() {
 		if(request.getUserCookieId().equals("")) {
+			this.user.generateCookieId();
+			setUser(this.user);
 			return;
+		} else {
+			user.setCookieId(request.getUserCookieId());
+			setUser(this.user);
 		}
 
 		MySQLAccess msa = new MySQLAccess();
@@ -484,5 +496,19 @@ public class HTTPHandler {
 	protected void setUser(User user) {
 		this.user = user;
 		this.response.setUser(user);
+	}
+	
+	protected boolean checkCsrf() {
+		if(!request.postContains("csrf")) {
+			return false;
+		}
+		if(user.getCookieId().isEmpty()) {
+			return false;
+		}
+		MySQLAccess msa = new MySQLAccess();
+		boolean validToken = msa.validToken(user.getCookieId(), request.getPostValue("csrf"));
+		msa.close();
+		
+		return validToken;
 	}
 }

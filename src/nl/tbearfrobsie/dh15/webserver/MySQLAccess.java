@@ -1,5 +1,7 @@
 package nl.tbearfrobsie.dh15.webserver;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -17,6 +19,9 @@ public class MySQLAccess {
 	
 	/** Database resultset */
 	private ResultSet resultSet = null;
+	
+	/** Random needed for cookie id generation */
+	private SecureRandom random = new SecureRandom();
 
 	/**
 	 * Constructor.
@@ -162,6 +167,53 @@ public class MySQLAccess {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Creates a token.
+	 * 
+	 * @param String cookieId
+	 * @return void
+	 */
+	public String createToken(String cookieId) {
+		try {
+			String token = new BigInteger(130, random).toString(32);
+			preparedStatement = connect.prepareStatement("INSERT INTO csrf (cookieid, token) VALUES (?,?);");
+			preparedStatement.setString(1, cookieId);
+			preparedStatement.setString(2, token);
+			preparedStatement.executeUpdate();
+			return token;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	/**
+	 * Valid token.
+	 * 
+	 * @param String cookieId
+	 * @param String token
+	 * @return void
+	 */
+	public boolean validToken(String cookieId, String token) {
+		try {
+			preparedStatement = connect.prepareStatement("SELECT * FROM csrf WHERE cookieid = ?;");
+			preparedStatement.setString(1, cookieId);
+			resultSet = preparedStatement.executeQuery();
+			while(resultSet.next()) {
+				if(resultSet.getString("token").equals(token)) {
+					preparedStatement = connect.prepareStatement("DELETE FROM csrf WHERE cookieid = ? AND token = ?;");
+					preparedStatement.setString(1, cookieId);
+					preparedStatement.setString(2, token);
+					preparedStatement.executeUpdate();
+					return true;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 	/**

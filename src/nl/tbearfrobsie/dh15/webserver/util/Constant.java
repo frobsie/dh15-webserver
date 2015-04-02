@@ -78,4 +78,6 @@ public abstract class Constant {
 	
 	public static final String CSS_EXTENTION = ".css";
 	public static final String CONTENTTYPE_CSS = "text/css";
+	
+	public static final String CSRF_ERROR = "Csrf check failed!";
 }

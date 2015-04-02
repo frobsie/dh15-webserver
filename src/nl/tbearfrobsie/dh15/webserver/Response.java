@@ -100,7 +100,7 @@ public class Response {
 		try {
 			comm.sendLine(Constant.MSG_PROTOCOL_HEADER_HTTP + status);
 			
-			if(user.isLoggedIn()) {
+			if(!user.getCookieId().isEmpty()) {
 				comm.sendLine(Constant.MSG_PROTOCOL_HEADER_COOKIE + user.getCookieId() + Constant.MSG_PROTOCOL_HEADER_COOKIE_TAIL);
 			}
 			if(null != contentType) {
