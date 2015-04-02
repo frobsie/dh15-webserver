@@ -61,7 +61,7 @@ public abstract class Constant {
 	public static final String URI_SPLIT_DELIMITER_VALUE = "=";
 	public static final String URI_SPLIT_PORT = ":";
 	
-	public static final String LOCALHOST = "https://localhost";
+	public static final String PROTOCOL = "https://";
 
 	public static final String STATUSCODE_200_STR = "200 Ok";
 	public static final String STATUSCODE_203_STR = "203 No Content";

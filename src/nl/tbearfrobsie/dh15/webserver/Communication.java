@@ -186,4 +186,8 @@ public class Communication {
 		bufferedReader.close();
 		socket.close();
 	}
+	
+	public String getSocketIP() {
+		return socket.getInetAddress().toString();
+	}
 }
