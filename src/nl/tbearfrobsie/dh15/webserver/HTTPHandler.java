@@ -364,7 +364,7 @@ public class HTTPHandler {
 		
 		
 		if(isPortChanged) {
-			response.redirectUrl(Constant.LOCALHOST+Constant.URI_SPLIT_PORT+ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT)+Constant.SETTINGS_URI);
+			response.redirectUrl(Constant.PROTOCOL+this.comm.getSocketIP()+Constant.URI_SPLIT_PORT+ConfigPropertyValues.get(ConfigPropertyValues.CONFIG_KEY_PORT)+Constant.SETTINGS_URI);
 			throw new UpdatedConfigException();
 		} else {
 			response.redirectUrl(Constant.SETTINGS_URI);
